@@ -1,43 +1,60 @@
 'use client';
 import React from 'react';
-import { Card } from '@/components/ui/Card';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useMapStore } from '@/store/useMapStore';
-import * as Switch from '@radix-ui/react-switch';
-import { Layers } from 'lucide-react';
+import { Layers, Zap } from 'lucide-react';
+
+const LAYERS = [
+  { key: 'boundary'   as const, labelKey: 'map.fieldBoundaries', color: '#10b981' },
+  { key: 'disease'    as const, labelKey: 'map.diseaseZones',     color: '#dc2626' },
+  { key: 'ndvi'       as const, labelKey: 'map.ndviHeatmap',      color: '#84cc16' },
+  { key: 'terrain'    as const, labelKey: 'map.elevationContours',color: '#f59e0b' },
+  { key: 'flightPath' as const, labelKey: 'map.flightPath',       color: '#60a5fa' },
+  { key: 'telemetry'  as const, labelKey: 'map.liveTelemetry',    color: '#a78bfa' },
+];
 
 export function LayerControl() {
   const { t } = useTranslation();
   const { activeLayers, toggleLayer } = useMapStore();
 
-  const layers = [
-    { id: 'rgb', labelKey: 'map.rgbImagery' },
-    { id: 'ndvi', labelKey: 'map.ndviHeatmap' },
-    { id: 'disease', labelKey: 'map.diseaseZones' },
-    { id: 'elevation', labelKey: 'map.elevationContours' },
-    { id: 'flightPath', labelKey: 'map.flightPath' },
-  ];
-
   return (
-    <Card className="absolute top-4 right-4 w-64 shadow-lg z-10">
-      <div className="p-3 border-b border-border flex items-center gap-2">
-        <Layers className="w-4 h-4 text-brand-primary" />
-        <h3 className="font-semibold text-sm">{t('map.layers')}</h3>
+    <div className="absolute top-4 right-4 bg-slate-900/95 backdrop-blur-sm rounded-xl p-3 shadow-xl border border-slate-700 w-52">
+      <div className="flex items-center gap-2 mb-3">
+        <Layers className="w-4 h-4 text-slate-300" />
+        <span className="text-sm font-semibold text-white">{t('map.layers')}</span>
       </div>
-      <div className="p-2 flex flex-col gap-1">
-        {layers.map(layer => (
-          <div key={layer.id} className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md">
-            <span className="text-sm text-text-primary">{t(layer.labelKey)}</span>
-            <Switch.Root
-              className="w-9 h-5 bg-gray-200 dark:bg-gray-700 rounded-full relative data-[state=checked]:bg-brand-primary outline-none cursor-pointer"
-              checked={activeLayers[layer.id as keyof typeof activeLayers]}
-              onCheckedChange={() => toggleLayer(layer.id as keyof typeof activeLayers)}
-            >
-              <Switch.Thumb className="block w-4 h-4 bg-white rounded-full transition-transform duration-100 translate-x-0.5 will-change-transform data-[state=checked]:translate-x-[18px]" />
-            </Switch.Root>
-          </div>
+      <div className="space-y-2">
+        {LAYERS.map(({ key, labelKey, color }) => (
+          <label key={key} className="flex items-center gap-3 cursor-pointer group">
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={activeLayers[key]}
+                onChange={() => toggleLayer(key)}
+                className="sr-only"
+              />
+              <div
+                className={`w-9 h-5 rounded-full transition-colors duration-200 ${
+                  activeLayers[key] ? 'bg-blue-600' : 'bg-slate-600'
+                }`}
+              >
+                <div
+                  className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${
+                    activeLayers[key] ? 'translate-x-4' : 'translate-x-0'
+                  }`}
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+              <span className="text-xs text-slate-300 group-hover:text-white transition-colors">{t(labelKey)}</span>
+            </div>
+            {key === 'telemetry' && activeLayers[key] && (
+              <Zap className="w-3 h-3 text-violet-400 animate-pulse ml-auto" />
+            )}
+          </label>
         ))}
       </div>
-    </Card>
+    </div>
   );
 }

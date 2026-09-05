@@ -32,7 +32,9 @@
     "elevationContours": "उंची रूपरेषा",
     "flightPath": "उड्डाण मार्ग",
     "clickForDetails": "तपशीलांसाठी क्लिक करा",
-    "loadingMap": "नकाशा लोड होत आहे..."
+    "loadingMap": "नकाशा लोड होत आहे...",
+    "fieldBoundaries": "शेताच्या सीमा",
+    "liveTelemetry": "थेट टेलिमेट्री"
   },
   "disease": {
     "title": "रोग ओळख",

@@ -5,23 +5,32 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Spinner } from '@/components/ui/Spinner';
 import { useAppStore } from '@/store/useAppStore';
+import { loginUser, getCurrentUser } from '@/lib/api/auth';
 
 export default function LoginPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [email, setEmail] = useState('demo@droneplatform.in');
+  const [password, setPassword] = useState('demo1234');
   const setUser = useAppStore(state => state.setUser);
   
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
-    // Mock login
-    setTimeout(() => {
-      localStorage.setItem('token', 'mock_jwt_token');
-      setUser({ id: 'u1', name: 'Demo Farmer', email: 'demo@droneplatform.in', role: 'farmer' });
+    setError('');
+    try {
+      const { access_token } = await loginUser(email, password);
+      localStorage.setItem('token', access_token);
+      const user = await getCurrentUser();
+      setUser(user);
       router.push('/');
-    }, 1000);
+    } catch (err: any) {
+      setError(err?.response?.data?.detail || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -42,7 +51,8 @@ export default function LoginPage() {
               </label>
               <input 
                 type="email" 
-                defaultValue="demo@droneplatform.in"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
                 className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 required
               />
@@ -53,12 +63,17 @@ export default function LoginPage() {
               </label>
               <input 
                 type="password" 
-                defaultValue="demo1234"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
                 className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 required
               />
             </div>
             
+            {error && (
+              <p className="text-red-500 text-sm">{error}</p>
+            )}
+
             <button 
               type="submit" 
               disabled={loading}

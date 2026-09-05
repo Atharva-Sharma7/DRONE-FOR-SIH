@@ -1,6 +1,18 @@
 import asyncio
 import json
 from datetime import datetime, timedelta
+import bcrypt
+_orig_hashpw = bcrypt.hashpw
+def _patched_hashpw(password, salt):
+    if isinstance(password, (bytes, bytearray)) and len(password) > 72:
+        password = password[:72]
+    elif isinstance(password, str) and len(password.encode('utf-8')) > 72:
+        password = password.encode('utf-8')[:72]
+    return _orig_hashpw(password, salt)
+bcrypt.hashpw = _patched_hashpw
+
+if not hasattr(bcrypt, '__about__'):
+    bcrypt.__about__ = type('about', (), {'__version__': getattr(bcrypt, '__version__', '4.0.0')})
 from passlib.context import CryptContext
 from sqlalchemy.future import select
 from geoalchemy2.elements import WKTElement
@@ -146,6 +158,53 @@ async def run_seed():
         ]
         for a in alerts:
             session.add(a)
+
+        # Phase 3 Soil Sensor Stations & Readings
+        from app.models.soil_sensor import SoilSensorStation, SoilMetricReading
+        from app.models.telemetry import DroneTelemetryLog
+
+        station1 = SoilSensorStation(
+            field_id=fields[0].id,
+            station_code="WARANGA-SOIL-01",
+            location=dict_to_wkt({"type": "Point", "coordinates": [76.5667, 20.5500]}),
+            soil_type="Black Cotton Soil (Vertisol)"
+        )
+        station2 = SoilSensorStation(
+            field_id=fields[1].id,
+            station_code="WARANGA-SOIL-02",
+            location=dict_to_wkt({"type": "Point", "coordinates": [76.5680, 20.5520]}),
+            soil_type="Medium Black Clay Soil"
+        )
+        session.add(station1)
+        session.add(station2)
+        await session.commit()
+        await session.refresh(station1)
+        await session.refresh(station2)
+
+        readings = [
+            SoilMetricReading(station_id=station1.id, moisture_percentage=36.4, temperature_celsius=27.8, nitrogen_mg_kg=45.0, phosphorus_mg_kg=21.0, potassium_mg_kg=220.0, ec_ds_m=1.18),
+            SoilMetricReading(station_id=station2.id, moisture_percentage=29.2, temperature_celsius=29.5, nitrogen_mg_kg=38.0, phosphorus_mg_kg=16.5, potassium_mg_kg=195.0, ec_ds_m=1.35)
+        ]
+        for r in readings:
+            session.add(r)
+
+        # Phase 2 Telemetry log
+        telem = DroneTelemetryLog(
+            drone_id=drone.id,
+            mission_id=missions[0].id,
+            location=dict_to_wkt({"type": "Point", "coordinates": [76.5667, 20.5500]}),
+            altitude_m=45.0,
+            velocity_m_s=5.2,
+            heading_deg=180.0,
+            pitch_deg=-2.1,
+            roll_deg=0.5,
+            battery_percentage=88.5,
+            rtk_fix_status="FIXED_4D",
+            signal_rssi_dbm=-62.0,
+            jetson_temp_celsius=44.8,
+            telemetry_metadata={"payload": "Multispectral_LiDAR_Fusion", "fps": 30}
+        )
+        session.add(telem)
 
         await session.commit()
         print("Seeding complete.")

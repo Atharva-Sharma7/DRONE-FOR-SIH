@@ -32,7 +32,9 @@
     "elevationContours": "Elevation Contours",
     "flightPath": "Flight Path",
     "clickForDetails": "Click for details",
-    "loadingMap": "Loading map..."
+    "loadingMap": "Loading map...",
+    "fieldBoundaries": "Field Boundaries",
+    "liveTelemetry": "Live Telemetry"
   },
   "disease": {
     "title": "Disease Detections",

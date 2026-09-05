@@ -18,6 +18,8 @@ import app.models.dataset
 import app.models.prediction
 import app.models.terrain_metric
 import app.models.alert
+import app.models.soil_sensor
+import app.models.telemetry
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)

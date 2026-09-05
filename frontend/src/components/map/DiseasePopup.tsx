@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { Popup } from 'react-map-gl';
+import { Popup } from 'react-map-gl/maplibre';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getDiseaseDisplayName, getSeverityColor } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';

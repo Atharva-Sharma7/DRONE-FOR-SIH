@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { useTranslation } from '@/hooks/useTranslation';
 import { LayerControl } from '@/components/map/LayerControl';
@@ -24,7 +24,9 @@ export default function MapPage() {
         <h1 className="text-2xl font-bold text-text-primary">{t('map.title')}</h1>
       </div>
       <div className="relative flex-1 rounded-xl overflow-hidden border border-border shadow-sm">
-        <MapComponent />
+        <Suspense fallback={<div className="w-full h-full flex items-center justify-center"><Spinner size="lg" /></div>}>
+          <MapComponent />
+        </Suspense>
         <LayerControl />
       </div>
     </div>

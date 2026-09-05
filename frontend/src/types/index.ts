@@ -71,6 +71,45 @@ export interface NDVIDataPoint {
   ndre: number;
 }
 
+export interface SoilMetricReading {
+  id: string;
+  station_id: string;
+  moisture_percentage: number;
+  temperature_celsius: number;
+  nitrogen_mg_kg: number;
+  phosphorus_mg_kg: number;
+  potassium_mg_kg: number;
+  ec_ds_m: number;
+  recorded_at: string;
+}
+
+export interface SoilSensorStation {
+  id: string;
+  field_id: string;
+  station_code: string;
+  location?: GeoJSON.Feature;
+  soil_type: string;
+  created_at: string;
+  latest_reading?: SoilMetricReading;
+}
+
+export interface DroneTelemetry {
+  id: string;
+  drone_id: string;
+  mission_id?: string;
+  location?: GeoJSON.Feature;
+  altitude_m: number;
+  velocity_m_s: number;
+  heading_deg: number;
+  pitch_deg: number;
+  roll_deg: number;
+  battery_percentage: number;
+  rtk_fix_status: string;
+  signal_rssi_dbm: number;
+  jetson_temp_celsius: number;
+  timestamp: string;
+}
+
 export interface PaginatedResponse<T> {
   items: T[];
   total: number;

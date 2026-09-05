@@ -1,78 +1,69 @@
 'use client';
 import React, { useContext } from 'react';
-import { Menu, Bell, Sun, Moon, Globe } from 'lucide-react';
+import { Menu, RefreshCw, Globe } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { AppShellContext } from './AppShell';
 import { useAppStore } from '@/store/useAppStore';
 
 export function TopBar() {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const { setIsMobileSidebarOpen } = useContext(AppShellContext);
-  const { theme, setTheme, unreadAlertCount } = useAppStore();
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  };
-
-  const changeLanguage = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    i18n.changeLanguage(e.target.value);
-  };
+  const { isOffline } = useAppStore();
 
   return (
-    <header className="h-16 border-b border-border bg-surface flex items-center justify-between px-4 md:px-6 z-10 shrink-0">
+    <header
+      className="h-14 flex items-center justify-between px-5 flex-shrink-0"
+      style={{ borderBottom: '1px solid var(--border)', backgroundColor: 'var(--surface)' }}
+    >
+      {/* Left: mobile menu + farm identity */}
       <div className="flex items-center gap-4">
-        <button 
-          className="md:hidden text-text-secondary hover:text-text-primary"
+        <button
+          className="md:hidden text-[var(--text-muted)]"
           onClick={() => setIsMobileSidebarOpen(true)}
+          aria-label="Open menu"
         >
-          <Menu className="w-6 h-6" />
+          <Menu className="w-5 h-5" />
         </button>
-        <div className="hidden sm:block">
-          <h2 className="text-sm font-semibold text-text-primary">Patil Sheti</h2>
-          <p className="text-xs text-text-secondary">Waranga, Maharashtra</p>
+        <div>
+          <p className="text-sm font-semibold leading-none text-[var(--text-primary)]">Patil Sheti</p>
+          <p
+            className="text-[11px] leading-none mt-0.5 font-mono"
+            style={{ color: 'var(--text-muted)', fontFamily: 'IBM Plex Mono, monospace' }}
+          >
+            21.1458°N 79.0530°E · Waranga, Nagpur
+          </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-4">
-        {/* Language Switcher */}
-        <div className="flex items-center gap-1 text-sm bg-gray-100 dark:bg-gray-800 rounded-md px-2 py-1 border border-border">
-          <Globe className="w-4 h-4 text-text-secondary" />
-          <select 
-            value={i18n.language} 
-            onChange={changeLanguage}
-            className="bg-transparent text-text-primary outline-none border-none cursor-pointer appearance-none pr-4"
+      {/* Right: status + lang */}
+      <div className="flex items-center gap-4">
+        {/* Sync / offline status */}
+        <div className="flex items-center gap-1.5">
+          <span
+            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+            style={{ background: isOffline ? 'var(--rust)' : 'var(--green)' }}
+          />
+          <span
+            className="text-[11px] hidden sm:inline"
+            style={{ color: 'var(--text-muted)', fontFamily: 'IBM Plex Mono, monospace' }}
           >
-            <option value="en">EN</option>
+            {isOffline ? 'offline' : 'synced'}
+          </span>
+        </div>
+
+        {/* Language */}
+        <div className="flex items-center gap-1">
+          <Globe className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
+          <select
+            value={i18n.language}
+            onChange={e => i18n.changeLanguage(e.target.value)}
+            className="bg-transparent text-[11px] outline-none border-none cursor-pointer appearance-none pr-3"
+            style={{ color: 'var(--text-secondary)', fontFamily: 'IBM Plex Mono, monospace' }}
+          >
+            <option value="en">en</option>
             <option value="hi">हिं</option>
             <option value="mr">मर</option>
           </select>
-        </div>
-
-        {/* Theme Toggle */}
-        <button 
-          onClick={toggleTheme}
-          className="p-2 text-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-        >
-          {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-        </button>
-
-        {/* Alerts */}
-        <button className="p-2 text-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors relative">
-          <Bell className="w-5 h-5" />
-          {unreadAlertCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-surface"></span>
-          )}
-        </button>
-        
-        {/* Profile Avatar */}
-        <div className="w-8 h-8 bg-brand-primary text-white rounded-full flex items-center justify-center font-semibold text-sm ml-2 cursor-pointer">
-          P
         </div>
       </div>
     </header>

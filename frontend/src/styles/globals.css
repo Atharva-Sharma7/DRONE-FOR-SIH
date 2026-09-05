@@ -4,41 +4,169 @@
 
 @layer base {
   :root {
-    --background: #f8fafc;
-    --surface: #ffffff;
-    --border: #e2e8f0;
-    --text-primary: #0f172a;
-    --text-secondary: #64748b;
+    /* Light mode — Dried Straw palette */
+    --bg:          #F5F1EA;
+    --surface:     #FFFFFF;
+    --surface-2:   #EDE9E0;
+    --border:      #D8D2C5;
+    --text-primary: #17160F;
+    --text-secondary: #5C5748;
+    --text-muted:  #8B9EB5;
+    --accent:      #E8C84A;
+    --green:       #4A7C42;
+    --rust:        #C4531A;
+    --overcast:    #8B9EB5;
   }
 
   .dark {
-    --background: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
+    /* Dark mode — Vertisol palette (primary/field mode) */
+    --bg:          #17160F;
+    --surface:     #242318;
+    --surface-2:   #2E2D22;
+    --border:      #3A3928;
+    --text-primary: #EDE9E0;
+    --text-secondary: #A89F8C;
+    --text-muted:  #5C5748;
+    --accent:      #E8C84A;
+    --green:       #4A7C42;
+    --rust:        #C4531A;
+    --overcast:    #8B9EB5;
+  }
+
+  html {
+    background-color: var(--bg);
+    color: var(--text-primary);
+    font-feature-settings: 'kern' 1, 'liga' 1;
   }
 
   body {
-    background-color: var(--background);
+    background-color: var(--bg);
     color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* IBM Plex Mono for all numeric/data elements */
+  .data, code, .mono,
+  [data-value], .metric, .coord, .sensor-value {
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-variant-numeric: tabular-nums;
   }
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+/* ─── Scrollbar ──────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: var(--border);
-  border-radius: 4px;
+  border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary);
+  background: var(--text-muted);
 }
 
-/* MapLibre GL CSS is imported in FarmMap component */
+/* ─── Typography utilities ───────────────────── */
+.font-data {
+  font-family: 'IBM Plex Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── The ONE hero moment: Health Score ──────── */
+.health-score-hero {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: clamp(72px, 10vw, 120px);
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Instrument row ─────────────────────────── */
+.instrument-row {
+  display: grid;
+  border-top: 1px solid var(--border);
+  padding: 10px 0;
+  align-items: baseline;
+}
+
+.instrument-label {
+  font-size: 11px;
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.instrument-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.instrument-unit {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: 3px;
+}
+
+/* ─── Status dot ─────────────────────────────── */
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.status-dot.active  { background: var(--green); }
+.status-dot.warning { background: var(--accent); }
+.status-dot.alert   { background: var(--rust); }
+.status-dot.offline { background: var(--text-muted); }
+
+/* ─── DRONE ANIMATIONS (only 2 in entire app) ─── */
+
+/* 1. Rotor spin — clockwise pair */
+@keyframes rotor-cw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* 2. Rotor spin — counter-clockwise pair */
+@keyframes rotor-ccw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+
+/* 3. Radar sweep ping */
+@keyframes radar-ping {
+  0%   { transform: scale(0.3); opacity: 0.8; }
+  70%  { transform: scale(1);   opacity: 0.3; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+.rotor-cw  { animation: rotor-cw  0.18s linear infinite; transform-origin: center; }
+.rotor-ccw { animation: rotor-ccw 0.18s linear infinite; transform-origin: center; }
+.radar-ping {
+  animation: radar-ping 2s ease-out infinite;
+  transform-origin: center;
+}
+
+/* ─── Health score count-up (single purposeful animation) ─── */
+@keyframes score-reveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.score-reveal {
+  animation: score-reveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ─── Severity stripe ─────────────────────────── */
+.severity-severe   { border-left: 3px solid var(--rust); }
+.severity-moderate { border-left: 3px solid var(--accent); }
+.severity-mild     { border-left: 3px solid var(--green); }
+
+/* MapLibre container */
+.maplibregl-canvas { outline: none; }

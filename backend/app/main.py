@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 
-from app.routers import auth, farms, fields, missions, predictions, terrain, alerts
+from app.routers import auth, farms, fields, missions, predictions, terrain, alerts, telemetry, soil_sensors, weather, ndvi
 import boto3
 
 app = FastAPI(
@@ -26,6 +26,10 @@ app.include_router(missions.router, prefix="/api/v1/missions", tags=["missions"]
 app.include_router(predictions.router, prefix="/api/v1/predictions", tags=["predictions"])
 app.include_router(terrain.router, prefix="/api/v1/terrain", tags=["terrain"])
 app.include_router(alerts.router, prefix="/api/v1/alerts", tags=["alerts"])
+app.include_router(telemetry.router, prefix="/api/v1/telemetry", tags=["telemetry"])
+app.include_router(soil_sensors.router, prefix="/api/v1/soil-sensors", tags=["soil-sensors"])
+app.include_router(weather.router, prefix="/api/v1/weather", tags=["weather"])
+app.include_router(ndvi.router, prefix="/api/v1/ndvi", tags=["ndvi"])
 
 @app.on_event("startup")
 async def startup_event():
@@ -42,3 +46,4 @@ async def startup_event():
             s3_client.create_bucket(Bucket=settings.minio_bucket_name)
     except Exception as e:
         print(f"Failed to initialize MinIO bucket: {e}")
+

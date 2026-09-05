@@ -24,5 +24,6 @@ class Field(Base):
     farm = relationship("Farm", back_populates="fields")
     terrain_metrics = relationship("TerrainMetric", back_populates="field")
     missions = relationship("Mission", back_populates="field")
+    soil_sensors = relationship("SoilSensorStation", back_populates="field")
 
 Index('ix_fields_boundary_gist', Field.boundary, postgresql_using='gist')

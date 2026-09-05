@@ -1,6 +1,5 @@
+'use client';
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Bell, CheckCircle2 } from 'lucide-react';
 import { getAlerts, markAlertRead } from '@/lib/api/alerts';
@@ -48,48 +47,45 @@ export function AlertFeed() {
   };
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="flex items-center gap-2 text-md">
-          <Bell className="w-5 h-5 text-brand-accent" />
-          {t('dashboard.activeAlerts')}
-        </CardTitle>
-        <button className="text-xs text-brand-primary hover:underline">
-          {t('dashboard.viewAll')}
+    <div className="border border-[var(--border)] bg-[var(--surface)] h-full flex flex-col rounded-sm">
+      <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
+        <span className="text-xs font-mono text-[var(--text-muted)] lowercase tracking-wide">
+          alerts · open
+        </span>
+        <button className="text-[11px] font-mono text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
+          view all
         </button>
-      </CardHeader>
-      <CardContent className="flex-1 overflow-y-auto pt-4 space-y-4">
+      </div>
+      <div className="flex-1 overflow-y-auto">
         {loading ? (
-          <Spinner />
+          <div className="p-4 flex justify-center"><Spinner /></div>
         ) : alerts.length === 0 ? (
-          <div className="text-center py-8 text-text-secondary">
-            {t('dashboard.noAlerts')}
+          <div className="text-center py-8 text-[var(--text-muted)] text-sm font-mono">
+            no active alerts
           </div>
         ) : (
-          alerts.map(alert => (
-            <div key={alert.id} className="flex gap-3 p-3 rounded-lg border border-border bg-background/50 transition-all">
-              <div className="mt-0.5">
-                <Badge variant="severity" value={alert.severity}>
-                  {t(`alerts.${alert.severity}`)}
-                </Badge>
+          alerts.map(alert => {
+            const severityClass = alert.severity === 'high' ? 'severity-severe' : alert.severity === 'medium' ? 'severity-moderate' : 'severity-mild';
+            return (
+              <div key={alert.id} className={`flex gap-3 px-4 py-3 border-b border-[var(--border)] ${severityClass}`}>
+                <div className="flex-1">
+                  <p className="text-sm text-[var(--text-primary)]">{alert.message}</p>
+                  <p className="font-mono text-[10px] text-[var(--text-muted)] mt-1">{formatDate(alert.created_at)}</p>
+                </div>
+                {!alert.is_read && (
+                  <button 
+                    onClick={() => handleMarkRead(alert.id)}
+                    className="text-[var(--text-muted)] hover:text-[var(--green)] transition-colors mt-0.5"
+                    title={t('alerts.markRead')}
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-text-primary">{alert.message}</p>
-                <p className="text-xs text-text-secondary mt-1">{formatDate(alert.created_at)}</p>
-              </div>
-              {!alert.is_read && (
-                <button 
-                  onClick={() => handleMarkRead(alert.id)}
-                  className="text-text-secondary hover:text-green-500 transition-colors"
-                  title={t('alerts.markRead')}
-                >
-                  <CheckCircle2 className="w-5 h-5" />
-                </button>
-              )}
-            </div>
-          ))
+            );
+          })
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
