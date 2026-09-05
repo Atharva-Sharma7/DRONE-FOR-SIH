@@ -137,5 +137,74 @@
     "password": "Password",
     "signIn": "Sign In",
     "welcomeBack": "Welcome Back"
+  },
+  "topbar": {
+    "farmerMode": "Farmer Mode",
+    "judgeMode": "Judge / Tech Mode",
+    "listenAdvisory": "Listen",
+    "stopSpeaking": "Stop Audio"
+  },
+  "infoHub": {
+    "title": "Farm Information & Advisory Center",
+    "subtitle": "Live Multispectral Drone Diagnostic Bulletins & Direct Action",
+    "criticalWarnings": "Critical Action Alerts",
+    "all": "All Bulletins",
+    "critical": "Critical Alerts",
+    "agronomic": "Agronomic",
+    "soil": "Soil & Moisture",
+    "drone": "Drone & Edge AI",
+    "actionRequired": "Action Required",
+    "cropProtection": "Crop Protection",
+    "soilNotice": "Soil Notice",
+    "rpiEdge": "Raspberry Pi 5 Edge",
+    "recommendedAction": "Recommended Action",
+    "acknowledge": "Acknowledge",
+    "acknowledged": "Acknowledged",
+    "listen": "Listen",
+    "quickSpray": "1-Tap Spray Drone",
+    "items": {
+      "crit1": {
+        "title": "Severe Charcoal Rot Detected In Soybean East Field",
+        "location": "Sector B-3 · Waranga Farmland East",
+        "description": "Hyperspectral and RGB analysis identified fungal mycelium infection (Macrophomina phaseolina) affecting 1.4 hectares of soybean canopy.",
+        "action": "Immediate spot-application of Trichoderma viride bio-fungicide within 24 hours. Isolate drainage runoff to adjacent cotton plots.",
+        "timestamp": "14 Mins Ago"
+      },
+      "crit2": {
+        "title": "High Elevation Water Pooling Depression Risk",
+        "location": "Sector N-1 · Cotton North Field",
+        "description": "LiDAR elevation DEM revealed a 1.2m contour depression collecting heavy rainwater. High susceptibility to root asphyxiation.",
+        "action": "Dispatch field labor to cut surface drainage trench towards South-East drainage line.",
+        "timestamp": "42 Mins Ago"
+      },
+      "agro1": {
+        "title": "Target Spot Foliar Fungus Emerging In Cotton Canopy",
+        "location": "Sector N-2 · Cotton North Field",
+        "description": "Multispectral Red-Edge index dropped to 0.41, indicating Corynespora cassiicola spore concentration on lower foliage.",
+        "action": "Prepare Azoxystrobin + Difenoconazole spray mixture for scheduled drone precision payload flight.",
+        "timestamp": "2 Hours Ago"
+      },
+      "agro2": {
+        "title": "Yellow Mosaic Disease Vector Whitefly Concentration",
+        "location": "Sector S-1 · Mixed South Parcel",
+        "description": "Optical AI cameras detected Bemisia tabaci whitefly clusters on soybean leaf underside at threshold density.",
+        "action": "Install yellow sticky traps and initiate neem oil preventive spray.",
+        "timestamp": "3 Hours Ago"
+      },
+      "soil1": {
+        "title": "Soil Moisture Level Dropping Below 28% VWC",
+        "location": "Station 02 · Soybean East Plot",
+        "description": "Ground IoT probe records Volumetric Water Content at 27.8% VWC. Vertisol cracking beginning on surface soil.",
+        "action": "Schedule drip irrigation cycle for 45 minutes during evening low-evaporation window.",
+        "timestamp": "5 Hours Ago"
+      },
+      "drone1": {
+        "title": "Raspberry Pi 5 Edge AI Hailo-8 NPU Engine Calibrated",
+        "location": "AgriHawk-X8 UAS · Onboard Hardware",
+        "description": "All 4 vision pipelines (4K RGB, RedEdge Multispectral, TIR Thermal, Hyperspectral) synchronized at 38 FPS with 1.2cm RTK fix.",
+        "action": "Drone battery bank charged to 100%. Ready for next automated flight mission.",
+        "timestamp": "1 Hour Ago"
+      }
+    }
   }
 }

@@ -20,12 +20,18 @@ module.exports = {
         straw:     '#F5F1EA',  // dried straw (light bg)
         // ── CSS-var-backed semantic tokens ─────────────────
         bg:        'var(--bg)',
+        background: 'var(--bg)',
         surface:   'var(--surface)',
         'surface-2': 'var(--surface-2)',
         border:    'var(--border)',
+        'text-primary': 'var(--text-primary)',
+        'text-secondary': 'var(--text-secondary)',
+        'text-muted': 'var(--text-muted)',
         // ── Functional ─────────────────────────────────────
         accent:    'var(--accent)',
         green:     'var(--green)',
+        'brand-primary': 'var(--green)',
+        'brand-accent': 'var(--accent)',
       },
       fontFamily: {
         sans: ['Space Grotesk', 'ui-sans-serif', 'system-ui', 'sans-serif'],

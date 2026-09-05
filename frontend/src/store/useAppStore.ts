@@ -6,6 +6,7 @@ export type AppTheme = 'light' | 'dark' | 'system';
 export type AppFontFamily = 'space-grotesk' | 'inter' | 'outfit' | 'ibm-plex';
 export type AppFontSize = 'compact' | 'standard' | 'large';
 export type AppLanguage = 'en' | 'hi' | 'mr' | 'te' | 'ta' | 'gu' | 'pa';
+export type AppMode = 'farmer' | 'judge';
 
 export interface LanguageOption {
   code: AppLanguage;
@@ -30,13 +31,17 @@ interface AppState {
   language: AppLanguage;
   fontFamily: AppFontFamily;
   fontSize: AppFontSize;
+  appMode: AppMode;
   isOffline: boolean;
   unreadAlertCount: number;
+  isSpeaking: boolean;
   setUser: (user: User | null) => void;
   setTheme: (theme: AppTheme) => void;
   setLanguage: (lang: AppLanguage) => void;
   setFontFamily: (font: AppFontFamily) => void;
   setFontSize: (size: AppFontSize) => void;
+  setAppMode: (mode: AppMode) => void;
+  setIsSpeaking: (speaking: boolean) => void;
   setOffline: (isOffline: boolean) => void;
   setUnreadAlertCount: (count: number) => void;
 }
@@ -50,13 +55,17 @@ export const useAppStore = create<AppState>()(
       language: 'en',
       fontFamily: 'space-grotesk',
       fontSize: 'standard',
+      appMode: 'farmer',
       isOffline: false,
       unreadAlertCount: 3,
+      isSpeaking: false,
       setUser: (user) => set({ user, isAuthenticated: !!user }),
       setTheme: (theme) => set({ theme }),
       setLanguage: (language) => set({ language }),
       setFontFamily: (fontFamily) => set({ fontFamily }),
       setFontSize: (fontSize) => set({ fontSize }),
+      setAppMode: (appMode) => set({ appMode }),
+      setIsSpeaking: (isSpeaking) => set({ isSpeaking }),
       setOffline: (isOffline) => set({ isOffline }),
       setUnreadAlertCount: (count) => set({ unreadAlertCount: count }),
     }),
@@ -67,6 +76,7 @@ export const useAppStore = create<AppState>()(
         language: state.language,
         fontFamily: state.fontFamily,
         fontSize: state.fontSize,
+        appMode: state.appMode,
       }),
     }
   )

@@ -6,12 +6,18 @@ import { WeatherWidget } from '@/components/dashboard/WeatherWidget';
 import { SoilSensorWidget } from '@/components/dashboard/SoilSensorWidget';
 import { MissionSummaryCard } from '@/components/dashboard/MissionSummaryCard';
 import { QuickActionCards } from '@/components/dashboard/QuickActionCards';
-import { Sparkles, Navigation2 } from 'lucide-react';
+import { JudgeEvaluationDeck } from '@/components/judge/JudgeEvaluationDeck';
+import { QuickSprayModal } from '@/components/farmer/QuickSprayModal';
+import { Sparkles, Navigation2, Volume2, VolumeX, AlertTriangle, ShieldCheck, Plane, Sprout } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAppStore } from '@/store/useAppStore';
+import { speakText, stopSpeaking } from '@/lib/speech';
 
 export default function DashboardPage() {
   const { t } = useTranslation();
+  const { appMode, language, isSpeaking, setIsSpeaking } = useAppStore();
+  const [isFarmerSprayModalOpen, setIsFarmerSprayModalOpen] = useState(false);
   const [score, setScore] = useState(0);
   const TARGET = 78;
 
@@ -38,6 +44,84 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-7 pb-16 font-sans">
+      {/* ── DUAL PERSONA: IF JUDGE MODE ACTIVE -> SHOW TECHNICAL EVALUATION DECK ── */}
+      {appMode === 'judge' && (
+        <div className="animate-fade-in">
+          <JudgeEvaluationDeck />
+        </div>
+      )}
+
+      {/* ── DUAL PERSONA: IF FARMER MODE ACTIVE -> SHOW BIG INTUITIVE VOICE & QUICK SPRAY STRIP ── */}
+      {appMode === 'farmer' && (
+        <div className="rounded-3xl border-2 border-emerald-500/40 bg-emerald-500/10 p-5 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4 animate-fade-in transition-all">
+          <div className="flex items-center gap-4 w-full md:w-auto">
+            <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40 shrink-0">
+              <Sprout className="w-8 h-8" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2.5 py-0.5 rounded-md bg-emerald-600 text-white text-[10px] font-mono font-extrabold uppercase">
+                  {language === 'mr' ? 'शेतकरी मदत केंद्र' : language === 'hi' ? 'किसान सहायता केंद्र' : 'Farmer Action Center'}
+                </span>
+                <span className="text-xs font-mono text-emerald-700 dark:text-emerald-300 font-bold">
+                  {language === 'mr' ? 'बोलका सहाय्यक उपलब्ध' : language === 'hi' ? 'बोलने वाला सहायक सक्रिय' : 'Voice Assistant Active'}
+                </span>
+              </div>
+              <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] mt-1">
+                {language === 'mr' 
+                  ? 'नमस्कार शेतकरी दादा! पीक आरोग्य ७८% आहे, १ रोग आढळला.' 
+                  : language === 'hi'
+                  ? 'नमस्ते किसान भाई! फसल स्वास्थ्य ७८% है, १ रोग मिला है।'
+                  : 'Hello Farmer! Crop health is 78%, 1 infection detected.'}
+              </h2>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
+            {/* Audio Read-Aloud Speaker Button */}
+            <button
+              onClick={() => {
+                if (isSpeaking) {
+                  stopSpeaking();
+                  setIsSpeaking(false);
+                } else {
+                  setIsSpeaking(true);
+                  const farmerSummary = language === 'mr'
+                    ? 'शेतात पिकाचे आरोग्य ७८ टक्के आहे. सोयाबीन पूर्व भागात कोळशी रोगाचा प्रादुर्भाव झाला आहे. तात्काळ १-टॅप फवारणी बटण दाबून ड्रोन पाठवा.'
+                    : language === 'hi'
+                    ? 'खेत में फसल का स्वास्थ्य ७८ प्रतिशत है। सोयाबीन पूर्व क्षेत्र में चारकोल रॉट रोग पाया गया है। कृपया तत्काल १-टैप छिड़काव बटन दबाकर ड्रोन भेजें।'
+                    : 'Crop health is 78 percent. Charcoal rot detected in Soybean East field. Tap instant spray button to launch bio-agent drone.';
+                  speakText(farmerSummary, language, () => setIsSpeaking(true), () => setIsSpeaking(false));
+                }
+              }}
+              className={`flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-xs transition-all shadow-md active:scale-95 ${
+                isSpeaking
+                  ? 'bg-red-500 text-white animate-pulse'
+                  : 'bg-[var(--accent)] text-black hover:bg-amber-500'
+              }`}
+            >
+              {isSpeaking ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5 animate-bounce" />}
+              <span className="font-mono text-xs">
+                {isSpeaking
+                  ? (language === 'mr' ? 'थांबवा' : language === 'hi' ? 'बंद करें' : 'Stop')
+                  : (language === 'mr' ? '🔊 शेतीची माहिती ऐका' : language === 'hi' ? '🔊 खेत की बात सुनें' : '🔊 Listen Farm Report')}
+              </span>
+            </button>
+
+            {/* Instant Drone Sprayer Button */}
+            <button
+              onClick={() => setIsFarmerSprayModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-600/30 transition-all active:scale-95"
+            >
+              <Plane className="w-5 h-5" />
+              <span>
+                {language === 'mr' ? '🚀 त्वरित ड्रोन फवारणी' : language === 'hi' ? '🚀 तुरंत ड्रोन छिड़काव' : '🚀 1-Tap Drone Spray'}
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── TOP SECTION: Farm Command Station (Left) + DRONE INFO (TOP RIGHT) ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left / Center (7 Cols): Farm Health & Command Station */}
@@ -132,6 +216,15 @@ export default function DashboardPage() {
 
       {/* ── Mission Summary ── */}
       <MissionSummaryCard />
+
+      {/* ── Farmer 1-Tap Spray Dispatch Modal ── */}
+      <QuickSprayModal
+        isOpen={isFarmerSprayModalOpen}
+        onClose={() => setIsFarmerSprayModalOpen(false)}
+        targetField="Soybean East Field · Sector B-3"
+        targetDisease="Severe Charcoal Rot"
+        recommendedMedicine="Trichoderma viride bio-fungicide (1.4L spray mix)"
+      />
     </div>
   );
 }

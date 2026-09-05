@@ -45,30 +45,32 @@ export function DetectionCard({ prediction }: { prediction: Prediction }) {
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-sm">
-            <div className="bg-background rounded-md p-2 border border-border">
-              <span className="block text-text-secondary text-xs mb-1">{t('disease.affectedArea')}</span>
-              <span className="font-medium text-text-primary">{formatHectares(prediction.affected_area_ha)}</span>
+            <div className="bg-[var(--surface-2)] rounded-xl p-2.5 border border-[var(--border)]">
+              <span className="block text-[var(--text-muted)] text-xs mb-1 font-semibold">{t('disease.affectedArea')}</span>
+              <span className="font-bold text-[var(--text-primary)] font-mono">{formatHectares(prediction.affected_area_ha)}</span>
             </div>
-            <div className="bg-background rounded-md p-2 border border-border flex flex-col justify-center">
-              <span className="block text-text-secondary text-xs mb-1">{t('disease.location')}</span>
-              <span className="font-mono text-xs text-text-primary flex items-center gap-1">
-                <MapPin className="w-3 h-3" />
+            <div className="bg-[var(--surface-2)] rounded-xl p-2.5 border border-[var(--border)] flex flex-col justify-center">
+              <span className="block text-[var(--text-muted)] text-xs mb-1 font-semibold">{t('disease.location')}</span>
+              <span className="font-mono text-xs text-[var(--text-primary)] font-semibold flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-[var(--accent)]" />
                 {prediction.geom.geometry.type === 'Polygon' ? 'Polygon' : 'Point'}
               </span>
             </div>
           </div>
 
-          <div className="bg-brand-primary/5 border border-brand-primary/20 rounded-md p-3 text-sm flex gap-2 items-start">
-            <Info className="w-4 h-4 text-brand-primary mt-0.5 shrink-0" />
+          <div className="bg-[var(--surface-2)]/80 border border-[var(--border)] rounded-xl p-3.5 text-xs flex gap-2.5 items-start">
+            <Info className="w-4 h-4 text-[var(--accent)] mt-0.5 shrink-0" />
             <div>
-              <span className="font-medium text-brand-primary block mb-1">{t('disease.recommendedAction')}</span>
-              <span className="text-text-secondary">{prediction.recommended_action}</span>
+              <span className="font-bold text-[var(--text-primary)] block mb-1 font-mono uppercase tracking-wider text-[10px]">
+                {t('disease.recommendedAction')}
+              </span>
+              <span className="text-[var(--text-secondary)] font-medium leading-relaxed">{prediction.recommended_action}</span>
             </div>
           </div>
 
           <button 
             onClick={handleViewOnMap}
-            className="w-full py-2 bg-background border border-border hover:bg-gray-50 dark:hover:bg-gray-800 text-text-primary rounded-md text-sm font-medium transition-colors"
+            className="w-full py-2 bg-[var(--surface-2)] border border-[var(--border)] hover:border-[var(--accent)] text-[var(--text-primary)] rounded-xl text-xs font-mono font-bold transition-all shadow-sm"
           >
             {t('common.viewOnMap')}
           </button>

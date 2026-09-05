@@ -38,8 +38,8 @@ export default function DiseasesPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-text-primary">{t('disease.title')}</h1>
-        <span className="bg-brand-primary/10 text-brand-primary px-3 py-1 rounded-full text-sm font-medium">
+        <h1 className="text-2xl font-bold text-[var(--text-primary)]">{t('disease.title')}</h1>
+        <span className="bg-[var(--accent)]/15 text-[var(--accent)] px-3 py-1 rounded-full text-xs font-mono font-bold">
           {predictions.length} {t('disease.detections')}
         </span>
       </div>
