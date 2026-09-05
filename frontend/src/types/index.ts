@@ -107,6 +107,7 @@ export interface DroneTelemetry {
   rtk_fix_status: string;
   signal_rssi_dbm: number;
   jetson_temp_celsius: number;
+  rpi_temp_celsius?: number;
   timestamp: string;
 }
 

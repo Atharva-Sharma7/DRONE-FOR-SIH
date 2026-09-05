@@ -23,7 +23,7 @@ export function DetectionCard({ prediction }: { prediction: Prediction }) {
       <CardContent className="p-5">
         <div className="flex justify-between items-start mb-4">
           <h3 className="font-semibold text-lg text-text-primary">
-            {getDiseaseDisplayName(prediction.disease_class)}
+            {getDiseaseDisplayName(prediction.disease_class, t)}
           </h3>
           <Badge variant="severity" value={prediction.severity}>
             {t(`disease.${prediction.severity}`)}

@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Cloud, Wind, Droplets, Thermometer } from 'lucide-react';
 import { WMO_CODES, WARANGA_CENTER } from '@/lib/constants';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface WeatherData {
   current: {
@@ -22,6 +23,7 @@ interface WeatherData {
 }
 
 export function WeatherWidget() {
+  const { t } = useTranslation();
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -94,36 +96,36 @@ export function WeatherWidget() {
                   {Math.round(weather.current.temperature_c)}°
                 </div>
                 <div className="text-[11px] font-mono text-[var(--text-secondary)] mt-1">
-                  {wmo?.label.toLowerCase()} · feels {Math.round(weather.current.feels_like_c)}°
+                  {wmo?.label.toLowerCase()} · {t('common.feelsLike')} {Math.round(weather.current.feels_like_c)}°
                 </div>
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-0 border-t border-l border-[var(--border)] mb-6">
               <div className="flex flex-col items-center gap-1 p-3 border-b border-r border-[var(--border)]">
-                <span className="text-[10px] font-mono text-[var(--text-muted)]">humidity</span>
+                <span className="text-[10px] font-mono text-[var(--text-muted)] capitalize">{t('common.humidity')}</span>
                 <span className="text-sm font-mono text-[var(--text-primary)]">{weather.current.humidity_pct}%</span>
               </div>
               <div className="flex flex-col items-center gap-1 p-3 border-b border-r border-[var(--border)]">
-                <span className="text-[10px] font-mono text-[var(--text-muted)]">wind</span>
+                <span className="text-[10px] font-mono text-[var(--text-muted)] capitalize">{t('common.wind')}</span>
                 <span className="text-sm font-mono text-[var(--text-primary)]">{Math.round(weather.current.wind_speed_kmh)}<span className="text-[10px] text-[var(--text-muted)] ml-0.5">km/h</span></span>
               </div>
               <div className="flex flex-col items-center gap-1 p-3 border-b border-r border-[var(--border)]">
-                <span className="text-[10px] font-mono text-[var(--text-muted)]">cloud</span>
+                <span className="text-[10px] font-mono text-[var(--text-muted)] capitalize">{t('common.cloud')}</span>
                 <span className="text-sm font-mono text-[var(--text-primary)]">{weather.current.cloud_cover_pct}%</span>
               </div>
             </div>
 
             <div className="space-y-3 mt-auto">
-              <p className="text-[10px] font-mono text-[var(--text-muted)] lowercase tracking-wide">3-day forecast</p>
+              <p className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wide font-semibold">{t('common.forecast3Day')}</p>
               <div className="grid grid-cols-3 gap-3">
                 {weather.forecast_3day.map((day) => {
-                  const label = new Date(day.date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short' }).toLowerCase();
+                  const label = new Date(day.date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short' });
                   return (
                     <div key={day.date} className="flex flex-col border border-[var(--border)] rounded-sm p-2 bg-[var(--surface-2)]">
                       <div className="text-[10px] font-mono text-[var(--text-secondary)]">{label}</div>
                       <div className="text-sm font-mono text-[var(--text-primary)] mt-0.5">{Math.round(day.max_temp_c)}°<span className="text-[var(--text-muted)]">/{Math.round(day.min_temp_c)}°</span></div>
-                      <div className="text-[10px] font-mono text-[var(--overcast)] mt-1">{day.rain_probability_pct}% rain</div>
+                      <div className="text-[10px] font-mono text-[var(--overcast)] mt-1">{day.rain_probability_pct}% {t('common.rain')}</div>
                     </div>
                   );
                 })}

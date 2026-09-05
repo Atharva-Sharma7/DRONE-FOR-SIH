@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import Map, { Source, Layer, MapRef, NavigationControl, ScaleControl, Marker } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useMapStore } from '@/store/useMapStore';
-import { DISEASE_COLORS } from '@/lib/constants';
+import { DISEASE_COLORS, WARANGA_CENTER } from '@/lib/constants';
 import { DiseasePopup } from './DiseasePopup';
 import { DroneMarker } from './DroneMarker';
 import { PinBoundarySelector, PinCoord, FlightMode } from './PinBoundarySelector';
@@ -39,14 +39,12 @@ const SATELLITE_STYLE = {
   ]
 };
 
-// Real Waranga, Maharashtra village center
-const WARANGA_CENTER = { lat: 21.1458, lng: 79.0530 };
-
+// Default Farmland Pins in Waranga Farmlands
 const DEFAULT_PINS: PinCoord[] = [
-  { id: 1, label: 'NW Pin', lat: 21.1540, lng: 79.0440 },
-  { id: 2, label: 'NE Pin', lat: 21.1540, lng: 79.0620 },
-  { id: 3, label: 'SE Pin', lat: 21.1380, lng: 79.0620 },
-  { id: 4, label: 'SW Pin', lat: 21.1380, lng: 79.0440 },
+  { id: 1, label: 'NW Pin', lat: 21.0310, lng: 79.0280 },
+  { id: 2, label: 'NE Pin', lat: 21.0310, lng: 79.0420 },
+  { id: 3, label: 'SE Pin', lat: 21.0190, lng: 79.0420 },
+  { id: 4, label: 'SW Pin', lat: 21.0190, lng: 79.0280 },
 ];
 
 function isValidLat(lat: any): boolean {
@@ -61,9 +59,8 @@ function calculatePolygonAreaHa(pins: PinCoord[]): number {
   const valid = pins.filter(p => isValidLat(p.lat) && isValidLng(p.lng));
   if (valid.length < 3) return 0;
 
-  // Approximate planar area calculation converted to Hectares at 21° latitude
-  const latFactor = 111320; // meters per degree lat
-  const lngFactor = 40075000 * Math.cos((21.1458 * Math.PI) / 180) / 360; // meters per degree lng
+  const latFactor = 111320;
+  const lngFactor = (40075000 * Math.cos((WARANGA_CENTER.lat * Math.PI) / 180)) / 360;
 
   let areaM2 = 0;
   for (let i = 0; i < valid.length; i++) {
@@ -81,7 +78,7 @@ function calculatePolygonAreaHa(pins: PinCoord[]): number {
 // Generate dynamic serpentine scan flight path inside 4-pin polygon
 function generateDynamicFlightPath(pins: PinCoord[], mode: FlightMode): number[][] {
   const valid = pins.filter(p => isValidLat(p.lat) && isValidLng(p.lng));
-  if (valid.length < 4) return [[79.0440, 21.1380], [79.0620, 21.1540]];
+  if (valid.length < 4) return [[79.0280, 21.0190], [79.0420, 21.0310]];
 
   const minLng = Math.min(...valid.map(p => p.lng));
   const maxLng = Math.max(...valid.map(p => p.lng));
@@ -89,7 +86,6 @@ function generateDynamicFlightPath(pins: PinCoord[], mode: FlightMode): number[]
   const maxLat = Math.max(...valid.map(p => p.lat));
 
   if (mode === 'patrol') {
-    // Perimeter loop along 4 pins
     return [
       [valid[0].lng, valid[0].lat],
       [valid[1].lng, valid[1].lat],
@@ -100,7 +96,6 @@ function generateDynamicFlightPath(pins: PinCoord[], mode: FlightMode): number[]
   }
 
   if (mode === 'inspect') {
-    // Hotspot circling pattern
     const midLng = (minLng + maxLng) / 2;
     const midLat = (minLat + maxLat) / 2;
     const rLng = (maxLng - minLng) * 0.25;
@@ -145,19 +140,19 @@ export default function FarmMap() {
   const [isPickMode, setIsPickMode] = useState(false);
   const [nextPickIndex, setNextPickIndex] = useState(0);
 
-  // Calculated area
+  // Calculated area in Hectares
   const calculatedAreaHa = useMemo(() => calculatePolygonAreaHa(pins), [pins]);
 
   // Dynamic Flight Path
   const dynamicFlightPath = useMemo(() => generateDynamicFlightPath(pins, flightMode), [pins, flightMode]);
 
-  // Target coordinates from query params (e.g. from LiDAR link)
+  // Target coordinates from query params
   const targetLatRaw = searchParams?.get('lat') ? parseFloat(searchParams.get('lat')!) : null;
   const targetLngRaw = searchParams?.get('lng') ? parseFloat(searchParams.get('lng')!) : null;
   const targetLat = isValidLat(targetLatRaw) ? targetLatRaw : null;
   const targetLng = isValidLng(targetLngRaw) ? targetLngRaw : null;
 
-  // Fly to URL lat/lng on load
+  // Fly to target lat/lng on load
   useEffect(() => {
     if (mapLoaded && targetLat && targetLng && mapRef.current) {
       mapRef.current.flyTo({
@@ -174,7 +169,7 @@ export default function FarmMap() {
     if (valid.length < 3) return null;
 
     const coords = valid.map(p => [p.lng, p.lat]);
-    coords.push([valid[0].lng, valid[0].lat]); // Close main polygon
+    coords.push([valid[0].lng, valid[0].lat]);
 
     const minLng = Math.min(...valid.map(p => p.lng));
     const maxLng = Math.max(...valid.map(p => p.lng));
@@ -183,30 +178,26 @@ export default function FarmMap() {
     const w = maxLng - minLng;
     const h = maxLat - minLat;
 
-    // Sub-zone polygons inside 4 pins with dynamic crop health colors
     const subZones = [
-      // Healthy Zone (Green)
       {
         type: 'Feature',
-        properties: { name: 'Healthy Canopy Zone', color: '#166534', opacity: 0.35 },
+        properties: { name: 'Healthy Cotton Canopy', color: '#166534', opacity: 0.35 },
         geometry: {
           type: 'Polygon',
           coordinates: [[[minLng + w*0.1, minLat + h*0.5], [minLng + w*0.9, minLat + h*0.5], [minLng + w*0.9, minLat + h*0.9], [minLng + w*0.1, minLat + h*0.9], [minLng + w*0.1, minLat + h*0.5]]]
         }
       },
-      // Mild Stress Zone (Lime)
       {
         type: 'Feature',
-        properties: { name: 'Mild Stress Zone', color: '#84cc16', opacity: 0.35 },
+        properties: { name: 'Mild Nitrogen Stress', color: '#84cc16', opacity: 0.35 },
         geometry: {
           type: 'Polygon',
           coordinates: [[[minLng + w*0.1, minLat + h*0.1], [minLng + w*0.5, minLat + h*0.1], [minLng + w*0.5, minLat + h*0.5], [minLng + w*0.1, minLat + h*0.5], [minLng + w*0.1, minLat + h*0.1]]]
         }
       },
-      // Severe Disease Hotspot (Rust Red)
       {
         type: 'Feature',
-        properties: { name: 'Charcoal Rot Hotspot', color: '#C4531A', opacity: 0.55 },
+        properties: { name: 'Severe Charcoal Rot Hotspot', color: '#DC2626', opacity: 0.55 },
         geometry: {
           type: 'Polygon',
           coordinates: [[[minLng + w*0.6, minLat + h*0.15], [minLng + w*0.85, minLat + h*0.15], [minLng + w*0.85, minLat + h*0.4], [minLng + w*0.6, minLat + h*0.4], [minLng + w*0.6, minLat + h*0.15]]]
@@ -220,7 +211,7 @@ export default function FarmMap() {
         features: [
           {
             type: 'Feature',
-            properties: { name: 'Active 4-Pin Custom Field Boundary' },
+            properties: { name: 'Active Farmland Boundary' },
             geometry: { type: 'Polygon', coordinates: [coords] }
           }
         ]
@@ -268,7 +259,7 @@ export default function FarmMap() {
     if (mapRef.current) {
       mapRef.current.flyTo({
         center: [WARANGA_CENTER.lng, WARANGA_CENTER.lat],
-        zoom: 13.5,
+        zoom: 14.5,
         duration: 1500,
       });
     }
@@ -315,7 +306,7 @@ export default function FarmMap() {
   }, [isPickMode, nextPickIndex, pins, setSelectedPredictionId]);
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full font-sans">
       {/* 4-Pin & Flight Mode Selector Control */}
       <PinBoundarySelector
         pins={pins}
@@ -334,7 +325,7 @@ export default function FarmMap() {
         initialViewState={{
           longitude: (targetLng && isValidLng(targetLng)) ? targetLng : WARANGA_CENTER.lng,
           latitude: (targetLat && isValidLat(targetLat)) ? targetLat : WARANGA_CENTER.lat,
-          zoom: targetLat ? 16 : 13.5,
+          zoom: targetLat ? 16 : 14.5,
           pitch: 0,
           bearing: 0,
         }}
@@ -356,7 +347,7 @@ export default function FarmMap() {
               id="custom-boundary-fill"
               type="fill"
               paint={{
-                'fill-color': '#E8C84A',
+                'fill-color': '#FBBF24',
                 'fill-opacity': 0.12,
               }}
             />
@@ -364,14 +355,14 @@ export default function FarmMap() {
               id="custom-boundary-line"
               type="line"
               paint={{
-                'line-color': '#E8C84A',
+                'line-color': '#FBBF24',
                 'line-width': 3,
               }}
             />
           </Source>
         )}
 
-        {/* Dynamic NDVI / Disease Sub-Zone Heatmap Polygons */}
+        {/* Dynamic Crop Health Sub-Zones */}
         {customGeoJSON && activeLayers.disease && (
           <Source id="sub-zones" type="geojson" data={customGeoJSON.subZones}>
             <Layer
@@ -387,21 +378,21 @@ export default function FarmMap() {
               type="line"
               paint={{
                 'line-color': '#ffffff',
-                'line-width': 1,
+                'line-width': 1.5,
                 'line-dasharray': [2, 2],
               }}
             />
           </Source>
         )}
 
-        {/* Dynamic Serpentine Flight Path */}
+        {/* Dynamic Flight Path */}
         {customGeoJSON && activeLayers.flightPath && (
           <Source id="dynamic-flight" type="geojson" data={customGeoJSON.flightPath}>
             <Layer
               id="dynamic-flight-line"
               type="line"
               paint={{
-                'line-color': flightMode === 'inspect' ? '#f59e0b' : flightMode === 'patrol' ? '#10b981' : '#60a5fa',
+                'line-color': flightMode === 'inspect' ? '#F59E0B' : flightMode === 'patrol' ? '#10B981' : '#60A5FA',
                 'line-width': 2.5,
                 'line-dasharray': [4, 2],
               }}
@@ -409,7 +400,7 @@ export default function FarmMap() {
           </Source>
         )}
 
-        {/* 4 Corner Pin Markers (Draggable & Interactive) */}
+        {/* 4 Corner Pin Markers (Draggable) */}
         {pins.map((p, idx) => {
           if (!isValidLat(p.lat) || !isValidLng(p.lng)) return null;
           return (
@@ -422,7 +413,7 @@ export default function FarmMap() {
               onDragEnd={(evt) => handlePinDragEnd(idx, evt)}
             >
               <div className="flex flex-col items-center group cursor-grab active:cursor-grabbing">
-                <div className="bg-[var(--accent)] text-black font-bold font-mono text-[10px] px-1.5 py-0.5 rounded shadow-xl border border-black/30 flex items-center gap-1">
+                <div className="bg-[var(--accent)] text-black font-bold font-mono text-[10px] px-1.5 py-0.5 rounded-md shadow-xl border border-black/30 flex items-center gap-1">
                   <span>Pin {p.id} ({p.label})</span>
                 </div>
                 <MapPin className="w-6 h-6 text-[var(--accent)] drop-shadow-xl fill-black/50" />
@@ -431,7 +422,7 @@ export default function FarmMap() {
           );
         })}
 
-        {/* Target Pin Marker (If redirected from LiDAR error pin) */}
+        {/* Target Pin Marker (LiDAR Error Anomaly) */}
         {targetLat && targetLng && isValidLat(targetLat) && isValidLng(targetLng) && (
           <Marker longitude={targetLng} latitude={targetLat} anchor="center">
             <div className="relative flex items-center justify-center">
@@ -443,12 +434,12 @@ export default function FarmMap() {
           </Marker>
         )}
 
-        {/* Dynamic Drone Marker moving along custom flight path */}
+        {/* Drone Marker */}
         {activeLayers.telemetry && (
           <DroneMarker customPath={dynamicFlightPath} flightMode={flightMode} />
         )}
 
-        {/* Disease Detail Popup */}
+        {/* Disease Popup */}
         {popupInfo && (
           <DiseasePopup
             info={popupInfo}

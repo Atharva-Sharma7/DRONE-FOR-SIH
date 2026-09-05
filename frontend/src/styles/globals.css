@@ -4,33 +4,43 @@
 
 @layer base {
   :root {
-    /* Light mode — Dried Straw palette */
-    --bg:          #F5F1EA;
-    --surface:     #FFFFFF;
-    --surface-2:   #EDE9E0;
-    --border:      #D8D2C5;
-    --text-primary: #17160F;
-    --text-secondary: #5C5748;
-    --text-muted:  #8B9EB5;
-    --accent:      #E8C84A;
-    --green:       #4A7C42;
-    --rust:        #C4531A;
-    --overcast:    #8B9EB5;
+    /* High-contrast crisp light mode */
+    --bg:              #F8FAFC;
+    --surface:         #FFFFFF;
+    --surface-2:       #EDF2F7;
+    --border:          #CBD5E1;
+    --border-strong:   #94A3B8;
+    
+    /* Deep dark high-contrast text for light theme */
+    --text-primary:    #0F172A;
+    --text-secondary:  #334155;
+    --text-muted:      #64748B;
+    
+    --accent:          #D97706; /* Deep Amber Gold */
+    --accent-light:    #FEF3C7;
+    --green:           #15803D; /* Deep Forest Green */
+    --rust:            #DC2626; /* Vivid Alert Red */
+    --overcast:        #475569;
   }
 
   .dark {
-    /* Dark mode — Vertisol palette (primary/field mode) */
-    --bg:          #17160F;
-    --surface:     #242318;
-    --surface-2:   #2E2D22;
-    --border:      #3A3928;
-    --text-primary: #EDE9E0;
-    --text-secondary: #A89F8C;
-    --text-muted:  #5C5748;
-    --accent:      #E8C84A;
-    --green:       #4A7C42;
-    --rust:        #C4531A;
-    --overcast:    #8B9EB5;
+    /* Dark mode — Vertisol high-contrast palette */
+    --bg:              #12120C;
+    --surface:         #1E1D15;
+    --surface-2:       #2A291E;
+    --border:          #3F3E2F;
+    --border-strong:   #5C5A44;
+    
+    /* High-contrast crisp text for dark theme */
+    --text-primary:    #FFFFFF;
+    --text-secondary:  #E2DFD2;
+    --text-muted:      #9E9A88;
+    
+    --accent:          #FBBF24; /* Radiant Rabi Gold */
+    --accent-light:    #78350F;
+    --green:           #22C55E; /* Canopy Green */
+    --rust:            #EF4444; /* Urgent Red */
+    --overcast:        #94A3B8;
   }
 
   html {
@@ -44,22 +54,64 @@
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
-  /* IBM Plex Mono for all numeric/data elements */
+  /* Mono font for all data telemetry */
   .data, code, .mono,
   [data-value], .metric, .coord, .sensor-value {
-    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-family: var(--font-mono, 'IBM Plex Mono', 'Courier New', monospace);
     font-variant-numeric: tabular-nums;
   }
 }
 
+/* ─── Dynamic Font Family Classes ────────────── */
+.font-family-space-grotesk {
+  font-family: var(--font-space, 'Space Grotesk'), sans-serif;
+}
+.font-family-inter {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+.font-family-outfit {
+  font-family: 'Outfit', 'Space Grotesk', sans-serif;
+}
+.font-family-ibm-plex {
+  font-family: var(--font-mono, 'IBM Plex Mono'), monospace;
+}
+
+/* ─── Dynamic Font Size Classes ──────────────── */
+.font-size-compact {
+  font-size: 13px;
+}
+.font-size-compact h1 { font-size: 1.5rem; }
+.font-size-compact h2 { font-size: 1.25rem; }
+.font-size-compact h3 { font-size: 1.1rem; }
+
+.font-size-standard {
+  font-size: 15px;
+}
+.font-size-standard h1 { font-size: 1.75rem; }
+.font-size-standard h2 { font-size: 1.4rem; }
+.font-size-standard h3 { font-size: 1.2rem; }
+
+.font-size-large {
+  font-size: 17px;
+}
+.font-size-large h1 { font-size: 2rem; }
+.font-size-large h2 { font-size: 1.6rem; }
+.font-size-large h3 { font-size: 1.35rem; }
+
+/* ─── Title Case Utilities ───────────────────── */
+.titlecase, .heading-title {
+  text-transform: capitalize;
+}
+
 /* ─── Scrollbar ──────────────────────────────── */
-::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: var(--border);
-  border-radius: 2px;
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
@@ -67,22 +119,22 @@
 
 /* ─── Typography utilities ───────────────────── */
 .font-data {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono, 'IBM Plex Mono'), monospace;
   font-variant-numeric: tabular-nums;
 }
 
-/* ─── The ONE hero moment: Health Score ──────── */
+/* ─── Hero Health Score ──────────────────────── */
 .health-score-hero {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: clamp(72px, 10vw, 120px);
-  font-weight: 700;
+  font-family: var(--font-mono, 'IBM Plex Mono'), monospace;
+  font-size: clamp(64px, 8vw, 100px);
+  font-weight: 800;
   color: var(--accent);
   line-height: 1;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }
 
-/* ─── Instrument row ─────────────────────────── */
+/* ─── Instrument Row ─────────────────────────── */
 .instrument-row {
   display: grid;
   border-top: 1px solid var(--border);
@@ -92,55 +144,63 @@
 
 .instrument-label {
   font-size: 11px;
-  text-transform: lowercase;
+  font-weight: 600;
+  text-transform: capitalize;
   letter-spacing: 0.02em;
   color: var(--text-secondary);
-  font-family: 'IBM Plex Mono', monospace;
 }
 
 .instrument-value {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono, 'IBM Plex Mono'), monospace;
   font-variant-numeric: tabular-nums;
-  font-size: 22px;
-  font-weight: 500;
+  font-size: 20px;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
 .instrument-unit {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono, 'IBM Plex Mono'), monospace;
   font-size: 11px;
   color: var(--text-muted);
   margin-left: 3px;
 }
 
-/* ─── Status dot ─────────────────────────────── */
+/* ─── Status Dot ─────────────────────────────── */
 .status-dot {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   display: inline-block;
   flex-shrink: 0;
 }
-.status-dot.active  { background: var(--green); }
+.status-dot.active  { background: var(--green); box-shadow: 0 0 6px var(--green); }
 .status-dot.warning { background: var(--accent); }
-.status-dot.alert   { background: var(--rust); }
+.status-dot.alert   { background: var(--rust); box-shadow: 0 0 8px var(--rust); animation: pulse 1.5s infinite; }
 .status-dot.offline { background: var(--text-muted); }
 
-/* ─── DRONE ANIMATIONS (only 2 in entire app) ─── */
+/* ─── Critical Info Red Alert Box ────────────── */
+.alert-critical-card {
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  border-left: 4px solid #DC2626;
+}
+.dark .alert-critical-card {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-left: 4px solid #EF4444;
+}
 
-/* 1. Rotor spin — clockwise pair */
+/* ─── Drone Animations ───────────────────────── */
 @keyframes rotor-cw {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
 
-/* 2. Rotor spin — counter-clockwise pair */
 @keyframes rotor-ccw {
   from { transform: rotate(0deg); }
   to   { transform: rotate(-360deg); }
 }
 
-/* 3. Radar sweep ping */
 @keyframes radar-ping {
   0%   { transform: scale(0.3); opacity: 0.8; }
   70%  { transform: scale(1);   opacity: 0.3; }
@@ -154,7 +214,6 @@
   transform-origin: center;
 }
 
-/* ─── Health score count-up (single purposeful animation) ─── */
 @keyframes score-reveal {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -163,10 +222,8 @@
   animation: score-reveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* ─── Severity stripe ─────────────────────────── */
-.severity-severe   { border-left: 3px solid var(--rust); }
-.severity-moderate { border-left: 3px solid var(--accent); }
-.severity-mild     { border-left: 3px solid var(--green); }
+.severity-severe   { border-left: 4px solid var(--rust); }
+.severity-moderate { border-left: 4px solid var(--accent); }
+.severity-mild     { border-left: 4px solid var(--green); }
 
-/* MapLibre container */
 .maplibregl-canvas { outline: none; }

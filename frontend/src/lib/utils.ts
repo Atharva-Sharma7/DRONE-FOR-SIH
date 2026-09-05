@@ -51,12 +51,21 @@ export function getStatusColor(status: string) {
   }
 }
 
-export function getDiseaseDisplayName(diseaseClass: string) {
-  const map: Record<string, string> = {
+export function getDiseaseDisplayName(diseaseClass: string, t?: (key: string) => string) {
+  const keyMap: Record<string, string> = {
+    'charcoal_rot': 'disease.charcoalRot',
+    'target_spot': 'disease.targetSpot',
+    'root_knot_nematode': 'disease.rkn',
+    'yellow_mosaic': 'disease.ymd'
+  };
+  if (t && keyMap[diseaseClass]) {
+    return t(keyMap[diseaseClass]);
+  }
+  const fallbackMap: Record<string, string> = {
     'charcoal_rot': 'Charcoal Rot',
     'target_spot': 'Target Spot',
     'root_knot_nematode': 'Root-knot Nematodes',
     'yellow_mosaic': 'Yellow Mosaic Disease'
   };
-  return map[diseaseClass] || diseaseClass;
+  return fallbackMap[diseaseClass] || diseaseClass;
 }
