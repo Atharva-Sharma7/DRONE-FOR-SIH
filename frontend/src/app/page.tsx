@@ -16,7 +16,7 @@ import { speakText, stopSpeaking } from '@/lib/speech';
 
 export default function DashboardPage() {
   const { t } = useTranslation();
-  const { appMode, language, isSpeaking, setIsSpeaking } = useAppStore();
+  const { language, isSpeaking, setIsSpeaking } = useAppStore();
   const [isFarmerSprayModalOpen, setIsFarmerSprayModalOpen] = useState(false);
   const [score, setScore] = useState(0);
   const TARGET = 78;
@@ -44,38 +44,30 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-7 pb-16 font-sans">
-      {/* ── DUAL PERSONA: IF JUDGE MODE ACTIVE -> SHOW TECHNICAL EVALUATION DECK ── */}
-      {appMode === 'judge' && (
-        <div className="animate-fade-in">
-          <JudgeEvaluationDeck />
-        </div>
-      )}
-
-      {/* ── DUAL PERSONA: IF FARMER MODE ACTIVE -> SHOW BIG INTUITIVE VOICE & QUICK SPRAY STRIP ── */}
-      {appMode === 'farmer' && (
-        <div className="rounded-3xl border-2 border-emerald-500/40 bg-emerald-500/10 p-5 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4 animate-fade-in transition-all">
-          <div className="flex items-center gap-4 w-full md:w-auto">
-            <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40 shrink-0">
-              <Sprout className="w-8 h-8" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-2.5 py-0.5 rounded-md bg-emerald-600 text-white text-[10px] font-mono font-extrabold uppercase">
-                  {language === 'mr' ? 'शेतकरी मदत केंद्र' : language === 'hi' ? 'किसान सहायता केंद्र' : 'Farmer Action Center'}
-                </span>
-                <span className="text-xs font-mono text-emerald-700 dark:text-emerald-300 font-bold">
-                  {language === 'mr' ? 'बोलका सहाय्यक उपलब्ध' : language === 'hi' ? 'बोलने वाला सहायक सक्रिय' : 'Voice Assistant Active'}
-                </span>
-              </div>
-              <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] mt-1">
-                {language === 'mr' 
-                  ? 'नमस्कार शेतकरी दादा! पीक आरोग्य ७८% आहे, १ रोग आढळला.' 
-                  : language === 'hi'
-                  ? 'नमस्ते किसान भाई! फसल स्वास्थ्य ७८% है, १ रोग मिला है।'
-                  : 'Hello Farmer! Crop health is 78%, 1 infection detected.'}
-              </h2>
-            </div>
+      {/* ── Farm Voice Advisory & 1-Tap Quick Action Strip ── */}
+      <div className="rounded-3xl border-2 border-emerald-500/40 bg-emerald-500/10 p-5 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4 animate-fade-in transition-all">
+        <div className="flex items-center gap-4 w-full md:w-auto">
+          <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40 shrink-0">
+            <Sprout className="w-8 h-8" />
           </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="px-2.5 py-0.5 rounded-md bg-emerald-600 text-white text-[10px] font-mono font-extrabold uppercase">
+                {language === 'mr' ? 'शेतकरी मदत केंद्र' : language === 'hi' ? 'किसान सहायता केंद्र' : 'Farmer Action Center'}
+              </span>
+              <span className="text-xs font-mono text-emerald-700 dark:text-emerald-300 font-bold">
+                {language === 'mr' ? 'बोलका सहाय्यक उपलब्ध' : language === 'hi' ? 'बोलने वाला सहायक सक्रिय' : 'Voice Assistant Active'}
+              </span>
+            </div>
+            <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] mt-1">
+              {language === 'mr' 
+                ? 'नमस्कार शेतकरी दादा! पीक आरोग्य ७८% आहे, १ रोग आढळला.' 
+                : language === 'hi'
+                ? 'नमस्ते किसान भाई! फसल स्वास्थ्य ७८% है, १ रोग मिला है।'
+                : 'Hello Farmer! Crop health is 78%, 1 infection detected.'}
+            </h2>
+          </div>
+        </div>
 
           <div className="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
             {/* Audio Read-Aloud Speaker Button */}
@@ -86,11 +78,16 @@ export default function DashboardPage() {
                   setIsSpeaking(false);
                 } else {
                   setIsSpeaking(true);
-                  const farmerSummary = language === 'mr'
-                    ? 'शेतात पिकाचे आरोग्य ७८ टक्के आहे. सोयाबीन पूर्व भागात कोळशी रोगाचा प्रादुर्भाव झाला आहे. तात्काळ १-टॅप फवारणी बटण दाबून ड्रोन पाठवा.'
-                    : language === 'hi'
-                    ? 'खेत में फसल का स्वास्थ्य ७८ प्रतिशत है। सोयाबीन पूर्व क्षेत्र में चारकोल रॉट रोग पाया गया है। कृपया तत्काल १-टैप छिड़काव बटन दबाकर ड्रोन भेजें।'
-                    : 'Crop health is 78 percent. Charcoal rot detected in Soybean East field. Tap instant spray button to launch bio-agent drone.';
+                  const farmerSummaryMap: Record<string, string> = {
+                    mr: 'शेतात पिकाचे आरोग्य ७८ टक्के आहे. सोयाबीन पूर्व भागात कोळशी रोगाचा प्रादुर्भाव झाला आहे. तात्काळ १-टॅप फवारणी बटण दाबून ड्रोन पाठवा.',
+                    hi: 'खेत में फसल का स्वास्थ्य ७८ प्रतिशत है। सोयाबीन पूर्व क्षेत्र में चारकोल रॉट रोग पाया गया है। कृपया तत्काल १-टैप छिड़काव बटन दबाकर ड्रोन भेजें।',
+                    te: 'పంట ఆరోగ్యం 78 శాతం. సోయాబీన్ తూర్పు పొలంలో చార్‌కోల్ రాట్ తెగులు ఉంది. డ్రోన్ పిచికారీ చేయడానికి వెంటనే బటన్ నొక్కండి.',
+                    ta: 'பயிர் ஆரோக்கியம் 78%. சோயாபீன் கிழக்கில் கரி அழுகல் நோய் உள்ளது. உடனடியாக ட்ரோன் மூலம் மருந்து தெளிக்கவும்.',
+                    gu: 'પાકનું સ્વાસ્થ્ય 78% છે. સોયાબીન પૂર્વ ખેતરમાં ચારકોલ રોટ રોગ જોવા મળ્યો છે. તાત્કાલિક ડ્રોન સ્પ્રે બટન દબાવો.',
+                    pa: 'ਫਸਲ ਦੀ ਸਿਹਤ 78% ਹੈ। ਸੋਇਆਬੀਨ ਪੂਰਬੀ ਖੇਤ ਵਿੱਚ ਚਾਰਕੋਲ ਰੌਟ ਰੋਗ ਹੈ। ਤੁਰੰਤ ਡਰੋਨ ਸਪਰੇਅ ਬਟਨ ਦਬਾਓ।',
+                    en: 'Crop health is 78 percent. Charcoal rot detected in Soybean East field. Tap instant spray button to launch bio-agent drone.',
+                  };
+                  const farmerSummary = farmerSummaryMap[language] || farmerSummaryMap.en;
                   speakText(farmerSummary, language, () => setIsSpeaking(true), () => setIsSpeaking(false));
                 }
               }}
@@ -120,7 +117,6 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
-      )}
 
       {/* ── TOP SECTION: Farm Command Station (Left) + DRONE INFO (TOP RIGHT) ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -216,6 +212,9 @@ export default function DashboardPage() {
 
       {/* ── Mission Summary ── */}
       <MissionSummaryCard />
+
+      {/* ── Edge AI & Technical Architecture Evaluation Deck ── */}
+      <JudgeEvaluationDeck />
 
       {/* ── Farmer 1-Tap Spray Dispatch Modal ── */}
       <QuickSprayModal

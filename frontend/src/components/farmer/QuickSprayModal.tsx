@@ -31,13 +31,18 @@ export function QuickSprayModal({
       setCountdown(3);
       stopSpeaking();
     } else {
-      // Audio narration for farmers
-      const narrationText = language === 'mr'
-        ? `लक्ष द्या शेतकरी बांधवांनो. ${targetDisease} नियंत्रणासाठी ड्रोन फवारणी तयार आहे. औषध: ${recommendedMedicine}. फवारणी सुरू करण्यासाठी खालील हिरवे बटण दाबा.`
-        : language === 'hi'
-        ? `किसान भाई ध्यान दें। ${targetDisease} नियंत्रण के लिए ड्रोन छिड़काव तैयार है। दवा: ${recommendedMedicine}। छिड़काव शुरू करने के लिए नीचे हरा बटन दबाएं।`
-        : `Attention farmer. Automated drone spray ready for ${targetDisease}. Bio-agent: ${recommendedMedicine}. Tap green button to launch flight.`;
-      
+      // Audio narration for farmers across all regional languages
+      const narrationMap: Record<string, string> = {
+        mr: `लक्ष द्या शेतकरी बांधवांनो. ${targetDisease} नियंत्रणासाठी ड्रोन फवारणी तयार आहे. औषध: ${recommendedMedicine}. फवारणी सुरू करण्यासाठी खालील हिरवे बटण दाबा.`,
+        hi: `किसान भाई ध्यान दें। ${targetDisease} नियंत्रण के लिए ड्रोन छिड़काव तैयार है। दवा: ${recommendedMedicine}। छिड़काव शुरू करने के लिए नीचे हरा बटन दबाएं।`,
+        te: `రైతు మిత్రులారా గమనించండి. ${targetDisease} నియంత్రణకు డ్రోన్ స్ప్రే సిద్ధంగా ఉంది. మందు: ${recommendedMedicine}. ప్రారంభించడానికి ఆకుపచ్చ బటన్ నొక్కండి.`,
+        ta: `விவசாயிகள் கவனத்திற்கு. ${targetDisease} கட்டுப்படுத்த ட்ரோன் தெளிப்பு தயார். மருந்து: ${recommendedMedicine}. தொடங்க பச்சை பொத்தானை அழுத்தவும்.`,
+        gu: `ખેડૂત મિત્રો ધ્યાન આપો. ${targetDisease} નિયંત્રણ માટે ડ્રોન સ્પ્રે તૈયાર છે. દવા: ${recommendedMedicine}. શરૂ કરવા માટે લીલું બટન દબાવો.`,
+        pa: `ਕਿਸਾਨ ਵੀਰੋ ਧਿਆਨ ਦਿਓ। ${targetDisease} ਦੀ ਰੋਕਥਾਮ ਲਈ ਡਰੋਨ ਸਪਰੇਅ ਤਿਆਰ ਹੈ। ਦਵਾਈ: ${recommendedMedicine}। ਸ਼ੁਰੂ ਕਰਨ ਲਈ ਹਰਾ ਬਟਨ ਦਬਾਓ।`,
+        en: `Attention farmer. Automated drone spray ready for ${targetDisease}. Bio-agent: ${recommendedMedicine}. Tap green button to launch flight.`,
+      };
+
+      const narrationText = narrationMap[language] || narrationMap.en;
       speakText(narrationText, language);
     }
   }, [isOpen, targetDisease, recommendedMedicine, language]);
@@ -53,11 +58,16 @@ export function QuickSprayModal({
       if (timer <= 0) {
         clearInterval(interval);
         setStep('dispatched');
-        const successSpeech = language === 'mr'
-          ? 'ड्रोन उड्डाण सुरू झाले आहे. शेतात अचूक फवारणी होत आहे.'
-          : language === 'hi'
-          ? 'ड्रोन ने उड़ान भर ली है। खेत में सटीक छिड़काव शुरू हो चुका है।'
-          : 'Drone launched successfully. Precision spraying in progress.';
+        const successSpeechMap: Record<string, string> = {
+          mr: 'ड्रोन उड्डाण सुरू झाले आहे. शेतात अचूक फवारणी होत आहे.',
+          hi: 'ड्रोन ने उड़ान भर ली है। खेत में सटीक छिड़काव शुरू हो चुका है।',
+          te: 'డ్రోన్ ఎగిరింది. పొలంలో ఖచ్చితమైన పిచికారీ జరుగుతోంది.',
+          ta: 'ட்ரோன் பறக்கத் தொடங்கியது. வயலில் துல்லியமாக மருந்து தெளிக்கப்படுகிறது.',
+          gu: 'ડ્રોન ઉડાન શરૂ થઈ ગઈ છે. ખેતરમાં સચોટ છંટકાવ થઈ રહ્યો છે.',
+          pa: 'ਡਰੋਨ ਨੇ ਉਡਾਣ ਭਰ ਲਈ ਹੈ। ਖੇਤ ਵਿੱਚ ਸਹੀ ਸਪਰੇਅ ਸ਼ੁਰੂ ਹੋ ਚੁੱਕੀ ਹੈ।',
+          en: 'Drone launched successfully. Precision spraying in progress.',
+        };
+        const successSpeech = successSpeechMap[language] || successSpeechMap.en;
         speakText(successSpeech, language);
       }
     }, 900);

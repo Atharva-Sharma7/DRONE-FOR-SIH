@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 
-from app.routers import auth, farms, fields, missions, predictions, terrain, alerts, telemetry, soil_sensors, weather, ndvi
+from app.routers import auth, farms, fields, missions, predictions, terrain, alerts, telemetry, soil_sensors, weather, ndvi, tts
 import boto3
 
 app = FastAPI(
@@ -30,6 +30,7 @@ app.include_router(telemetry.router, prefix="/api/v1/telemetry", tags=["telemetr
 app.include_router(soil_sensors.router, prefix="/api/v1/soil-sensors", tags=["soil-sensors"])
 app.include_router(weather.router, prefix="/api/v1/weather", tags=["weather"])
 app.include_router(ndvi.router, prefix="/api/v1/ndvi", tags=["ndvi"])
+app.include_router(tts.router, prefix="/api/v1/tts", tags=["tts"])
 
 @app.on_event("startup")
 async def startup_event():
