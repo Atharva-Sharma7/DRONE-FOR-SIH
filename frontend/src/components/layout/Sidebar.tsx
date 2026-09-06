@@ -12,6 +12,10 @@ import {
   Navigation,
   Settings,
   Radio,
+  Store,
+  FlaskConical,
+  Award,
+  ShieldAlert,
 } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -20,13 +24,17 @@ export function Sidebar() {
   const { t } = useTranslation();
 
   const NAV = [
-    { href: '/',          icon: LayoutDashboard, title: t('nav.dashboard') },
-    { href: '/map',       icon: Map,             title: t('nav.farmMap') },
-    { href: '/live-feed', icon: Video,           title: t('nav.liveFeed') },
-    { href: '/diseases',  icon: Microscope,      title: t('nav.diseaseDetections') },
-    { href: '/analytics', icon: BarChart3,       title: t('nav.analytics') },
-    { href: '/lidar',     icon: Layers3,         title: t('nav.lidarViewer') },
-    { href: '/missions',  icon: Navigation,      title: t('nav.missions') },
+    { href: '/',             icon: LayoutDashboard, title: t('nav.dashboard') },
+    { href: '/map',          icon: Map,             title: t('nav.farmMap') },
+    { href: '/mandi',        icon: Store,           title: t('nav.mandi') || 'Mandi Bhav' },
+    { href: '/crop-doctor',  icon: FlaskConical,    title: t('nav.cropDoctor') || 'Crop Doctor' },
+    { href: '/kisan-rakshak', icon: ShieldAlert,    title: t('nav.kisanRakshak') || 'Kisan Rakshak' },
+    { href: '/yojna',        icon: Award,           title: t('nav.yojna') || 'Yojna & Claims' },
+    { href: '/live-feed',    icon: Video,           title: t('nav.liveFeed') },
+    { href: '/diseases',     icon: Microscope,      title: t('nav.diseaseDetections') },
+    { href: '/analytics',    icon: BarChart3,       title: t('nav.analytics') },
+    { href: '/lidar',        icon: Layers3,         title: t('nav.lidarViewer') },
+    { href: '/missions',     icon: Navigation,      title: t('nav.missions') },
   ];
 
   return (

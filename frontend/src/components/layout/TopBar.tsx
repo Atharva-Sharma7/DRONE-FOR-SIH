@@ -1,10 +1,10 @@
-'use client';
-import React, { useContext } from 'react';
-import { Menu, Globe, Sun, Moon, Volume2, VolumeX } from 'lucide-react';
+import React, { useContext, useState } from 'react';
+import { Menu, Globe, Sun, Moon, Volume2, VolumeX, Sparkles } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { AppShellContext } from './AppShell';
 import { useAppStore, SUPPORTED_LANGUAGES, AppLanguage } from '@/store/useAppStore';
 import { speakText, stopSpeaking } from '@/lib/speech';
+import { InteractiveFeatureDemoModal } from '@/components/dashboard/InteractiveFeatureDemoModal';
 
 export function TopBar() {
   const { t, i18n } = useTranslation();
@@ -18,6 +18,8 @@ export function TopBar() {
     isSpeaking, 
     setIsSpeaking 
   } = useAppStore();
+
+  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
 
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
@@ -84,6 +86,18 @@ export function TopBar() {
 
       {/* Right: Voice Advisory + Theme Toggle + Language Dropdown + Status */}
       <div className="flex items-center gap-2 sm:gap-3">
+        {/* Interactive Platform Feature Tour & Demo */}
+        <button
+          onClick={() => setIsDemoModalOpen(true)}
+          title="Interactive Platform Tour & Feature Demos"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-mono font-bold shadow-sm transition-all cursor-pointer"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+          <span className="hidden sm:inline">
+            {language === 'mr' ? '📖 वैशिष्ट्ये डेमो' : language === 'hi' ? '📖 फीचर्स डेमो' : '📖 Feature Demo'}
+          </span>
+        </button>
+
         {/* Global Voice Advisory Button (for illiterate farmers) */}
         <button
           onClick={handleVoiceAdvisory}
@@ -159,6 +173,12 @@ export function TopBar() {
           </select>
         </div>
       </div>
+
+      {/* Interactive Platform Feature Tour & Demo Modal */}
+      <InteractiveFeatureDemoModal
+        isOpen={isDemoModalOpen}
+        onClose={() => setIsDemoModalOpen(false)}
+      />
     </header>
   );
 }

@@ -6,7 +6,12 @@
     "analytics": "Analytics",
     "lidarViewer": "LiDAR Viewer",
     "missions": "Missions",
-    "settings": "Settings"
+    "mandi": "Mandi Bhav",
+    "cropDoctor": "Crop Doctor",
+    "yojna": "Yojna & Claims",
+    "liveFeed": "Live Video Feed",
+    "settings": "Settings",
+    "kisanRakshak": "Kisan Rakshak"
   },
   "dashboard": {
     "title": "Dashboard",

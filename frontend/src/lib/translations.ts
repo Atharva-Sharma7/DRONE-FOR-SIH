@@ -8,6 +8,10 @@ export const TRANSLATION_RESOURCES = {
   en: {
     translation: {
       nav: {
+        kisanRakshak: "Kisan Rakshak",
+        mandi: "Mandi Bhav",
+        cropDoctor: "Crop Doctor",
+        yojna: "Yojna & Claims",
         dashboard: "Dashboard",
         farmMap: "Farm Map & Boundary",
         liveFeed: "Live 4-Cam Drone Vision",
@@ -300,6 +304,10 @@ export const TRANSLATION_RESOURCES = {
   hi: {
     translation: {
       nav: {
+        kisanRakshak: "किसान रक्षक",
+        mandi: "मंडी भाव",
+        cropDoctor: "फसल डॉक्टर",
+        yojna: "सरकारी योजनाएं",
         dashboard: "मुख्य डैशबोर्ड",
         farmMap: "खेत का नक्शा और सीमा",
         liveFeed: "लाइव 4-कैमरा ड्रोन विज़न",
@@ -592,6 +600,10 @@ export const TRANSLATION_RESOURCES = {
   mr: {
     translation: {
       nav: {
+        kisanRakshak: "किसान रक्षक",
+        mandi: "बाजार भाव",
+        cropDoctor: "पीक डॉक्टर",
+        yojna: "योजना व दावे",
         dashboard: "मुख्य डॅशबोर्ड",
         farmMap: "शेताचा नकाशा व सीमा",
         liveFeed: "थेट 4-कॅमेरा ड्रोन व्हिजन",
@@ -884,6 +896,10 @@ export const TRANSLATION_RESOURCES = {
   te: {
     translation: {
       nav: {
+        kisanRakshak: "కిసాన్ రక్షక్",
+        mandi: "మార్కెట్ ధరలు",
+        cropDoctor: "పంట డాక్టర్",
+        yojna: "పథకాలు",
         dashboard: "ప్రధాన డాష్‌బోర్డ్",
         farmMap: "పొలం మ్యాప్ & సరిహద్దు",
         liveFeed: "లైవ్ 4-కెమెరా డ్రోన్ విజన్",
@@ -1176,6 +1192,10 @@ export const TRANSLATION_RESOURCES = {
   ta: {
     translation: {
       nav: {
+        kisanRakshak: "கிசான் ரக்ஷக்",
+        mandi: "சந்தை விலைகள்",
+        cropDoctor: "பயிர் மருத்துவர்",
+        yojna: "திட்டங்கள்",
         dashboard: "முதன்மை டாஷ்போர்டு",
         farmMap: "பண்ணை வரைபடம் & எல்லை",
         liveFeed: "நேரடி 4-கேமரா ட்ரோன் பார்வை",
@@ -1468,6 +1488,10 @@ export const TRANSLATION_RESOURCES = {
   gu: {
     translation: {
       nav: {
+        kisanRakshak: "કિસાન રક્ષક",
+        mandi: "બજાર ભાવ",
+        cropDoctor: "પાક ડોક્ટર",
+        yojna: "યોજનાઓ",
         dashboard: "મુખ્ય ડેશબોર્ડ",
         farmMap: "ખેતરનો નકશો અને સીમા",
         liveFeed: "લાઇવ 4-કેમેરા ડ્રોન વિઝન",
@@ -1760,6 +1784,10 @@ export const TRANSLATION_RESOURCES = {
   pa: {
     translation: {
       nav: {
+        kisanRakshak: "ਕਿਸਾਨ ਰੱਖਿਅਕ",
+        mandi: "ਮੰਡੀ ਭਾਅ",
+        cropDoctor: "ਫਸਲ ਡਾਕਟਰ",
+        yojna: "ਸਰਕਾਰੀ ਯੋਜਨਾਵਾਂ",
         dashboard: "ਮੁੱਖ ਡੈਸ਼ਬੋਰਡ",
         farmMap: "ਖੇਤ ਦਾ ਨਕਸ਼ਾ ਅਤੇ ਹੱਦ",
         liveFeed: "ਲਾਈਵ 4-ਕੈਮਰਾ ਡਰੋਨ ਵਿਜ਼ਨ",

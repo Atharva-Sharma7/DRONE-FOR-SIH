@@ -1,60 +1,234 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
-import { useMapStore } from '@/store/useMapStore';
-import { Layers, Zap } from 'lucide-react';
+import { useMapStore, BasemapType } from '@/store/useMapStore';
+import { useAppStore } from '@/store/useAppStore';
+import { 
+  Layers, 
+  Zap, 
+  Ruler, 
+  History, 
+  FileText, 
+  Video, 
+  ChevronDown, 
+  ChevronUp, 
+  Compass, 
+  SlidersHorizontal 
+} from 'lucide-react';
 
-const LAYERS = [
-  { key: 'boundary'   as const, labelKey: 'map.fieldBoundaries', color: '#10b981' },
-  { key: 'disease'    as const, labelKey: 'map.diseaseZones',     color: '#dc2626' },
-  { key: 'ndvi'       as const, labelKey: 'map.ndviHeatmap',      color: '#84cc16' },
-  { key: 'terrain'    as const, labelKey: 'map.elevationContours',color: '#f59e0b' },
-  { key: 'flightPath' as const, labelKey: 'map.flightPath',       color: '#60a5fa' },
-  { key: 'telemetry'  as const, labelKey: 'map.liveTelemetry',    color: '#a78bfa' },
+const BASEMAP_OPTIONS: { id: BasemapType; label: string; icon: string }[] = [
+  { id: 'satellite', label: 'Satellite', icon: '🛰️' },
+  { id: 'osm',       label: 'Cadastral', icon: '🗺️' },
+  { id: 'topo',      label: 'Topography', icon: '🏔️' },
+  { id: 'thermal',   label: 'Thermal IR', icon: '🌡️' },
 ];
 
 export function LayerControl() {
   const { t } = useTranslation();
-  const { activeLayers, toggleLayer } = useMapStore();
+  const { language } = useAppStore();
+  const { 
+    activeLayers, 
+    toggleLayer, 
+    basemap, 
+    setBasemap, 
+    compareMode, 
+    setCompareMode,
+    measureMode,
+    setMeasureMode,
+  } = useMapStore();
+  
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
-    <div className="absolute top-4 right-4 bg-slate-900/95 backdrop-blur-sm rounded-xl p-3 shadow-xl border border-slate-700 w-52">
-      <div className="flex items-center gap-2 mb-3">
-        <Layers className="w-4 h-4 text-slate-300" />
-        <span className="text-sm font-semibold text-white">{t('map.layers')}</span>
+    <div className="absolute top-4 right-4 z-20 bg-[var(--surface)]/95 backdrop-blur-md rounded-2xl p-4 shadow-2xl border border-[var(--border)] w-64 font-sans transition-all max-h-[calc(100vh-10rem)] overflow-y-auto custom-scrollbar">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-2 mb-3 border-b border-[var(--border)]">
+        <div className="flex items-center gap-2">
+          <SlidersHorizontal className="w-4 h-4 text-[var(--accent)]" />
+          <span className="text-xs font-bold font-mono uppercase tracking-wider text-[var(--text-primary)]">
+            {language === 'mr' ? 'अॅग्रो-जीआयएस नियंत्रक' : language === 'hi' ? 'कृषि-जीआईएस नियंत्रक' : 'AgroGIS Station'}
+          </span>
+        </div>
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="p-1 rounded-lg hover:bg-[var(--surface-2)] text-[var(--text-muted)]"
+          aria-label="Toggle Panel"
+        >
+          {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+        </button>
       </div>
-      <div className="space-y-2">
-        {LAYERS.map(({ key, labelKey, color }) => (
-          <label key={key} className="flex items-center gap-3 cursor-pointer group">
-            <div className="relative">
-              <input
-                type="checkbox"
-                checked={activeLayers[key]}
-                onChange={() => toggleLayer(key)}
-                className="sr-only"
-              />
-              <div
-                className={`w-9 h-5 rounded-full transition-colors duration-200 ${
-                  activeLayers[key] ? 'bg-blue-600' : 'bg-slate-600'
+
+      {!isCollapsed && (
+        <div className="space-y-4">
+          {/* 1. Basemap Selector */}
+          <div>
+            <span className="text-[10px] font-mono font-bold uppercase text-[var(--text-muted)] block mb-1.5">
+              {language === 'mr' ? 'नकाशा प्रकार (बेस मॅप)' : language === 'hi' ? 'नक्शा प्रकार (बेस मैप)' : 'Base Map View'}
+            </span>
+            <div className="grid grid-cols-2 gap-1.5">
+              {BASEMAP_OPTIONS.map((opt) => (
+                <button
+                  key={opt.id}
+                  onClick={() => setBasemap(opt.id)}
+                  className={`py-1.5 px-2 rounded-xl text-xs font-mono font-semibold flex items-center gap-1.5 transition-all ${
+                    basemap === opt.id
+                      ? 'bg-[var(--accent)] text-black font-bold shadow-md shadow-amber-500/20'
+                      : 'bg-[var(--surface-2)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border)]'
+                  }`}
+                >
+                  <span>{opt.icon}</span>
+                  <span className="truncate">{opt.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 2. Interactive Analysis Tools */}
+          <div className="pt-2 border-t border-[var(--border)]">
+            <span className="text-[10px] font-mono font-bold uppercase text-[var(--text-muted)] block mb-1.5">
+              {language === 'mr' ? 'अॅनालिटिक्स टूल्स' : language === 'hi' ? 'विश्लेषण उपकरण' : 'Interactive Tools'}
+            </span>
+            <div className="grid grid-cols-2 gap-1.5">
+              <button
+                onClick={() => {
+                  setMeasureMode(!measureMode);
+                  if (compareMode) setCompareMode(false);
+                }}
+                className={`py-1.5 px-2 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 transition-all border ${
+                  measureMode
+                    ? 'bg-amber-500 text-black border-amber-600 shadow-md'
+                    : 'bg-[var(--surface-2)] text-[var(--text-primary)] border-[var(--border)] hover:border-[var(--accent)]'
                 }`}
               >
-                <div
-                  className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${
-                    activeLayers[key] ? 'translate-x-4' : 'translate-x-0'
-                  }`}
+                <Ruler className="w-3.5 h-3.5" />
+                <span>{language === 'mr' ? 'मोजणी साधन' : language === 'hi' ? 'माप उपकरण' : 'Measure'}</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setCompareMode(!compareMode);
+                  if (measureMode) setMeasureMode(false);
+                }}
+                className={`py-1.5 px-2 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 transition-all border ${
+                  compareMode
+                    ? 'bg-amber-500 text-black border-amber-600 shadow-md'
+                    : 'bg-[var(--surface-2)] text-[var(--text-primary)] border-[var(--border)] hover:border-[var(--accent)]'
+                }`}
+              >
+                <History className="w-3.5 h-3.5" />
+                <span>{language === 'mr' ? 'तुलना स्लाइडर' : language === 'hi' ? 'तुलना स्लाइडर' : 'Compare'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* 3. Layer Toggles */}
+          <div className="pt-2 border-t border-[var(--border)]">
+            <span className="text-[10px] font-mono font-bold uppercase text-[var(--text-muted)] block mb-2">
+              {language === 'mr' ? 'शेती माहिती स्तर' : language === 'hi' ? 'कृषि सूचना परतें' : 'Agricultural Layers'}
+            </span>
+
+            <div className="space-y-2 text-xs font-medium">
+              {/* 7/12 Gat Cadastral Parcels */}
+              <label className="flex items-center justify-between cursor-pointer group py-0.5">
+                <span className="flex items-center gap-2 text-[var(--text-primary)]">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                  {language === 'mr' ? '७/१२ गट सीमा' : language === 'hi' ? '७/१२ खसरा सीमा' : '7/12 Gat Parcels'}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={activeLayers.cadastral}
+                  onChange={() => toggleLayer('cadastral')}
+                  className="rounded accent-amber-500 w-4 h-4 cursor-pointer"
                 />
-              </div>
+              </label>
+
+              {/* NDVI Plant Health Heatmap */}
+              <label className="flex items-center justify-between cursor-pointer group py-0.5">
+                <span className="flex items-center gap-2 text-[var(--text-primary)]">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                  {language === 'mr' ? 'एनडीव्हीआय आरोग्य स्तर' : language === 'hi' ? 'एनडीवीआई फसल स्वास्थ्य' : 'NDVI Canopy Heatmap'}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={activeLayers.ndvi}
+                  onChange={() => toggleLayer('ndvi')}
+                  className="rounded accent-amber-500 w-4 h-4 cursor-pointer"
+                />
+              </label>
+
+              {/* Disease Hotspots */}
+              <label className="flex items-center justify-between cursor-pointer group py-0.5">
+                <span className="flex items-center gap-2 text-[var(--text-primary)]">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-600" />
+                  {language === 'mr' ? 'रोग प्रादुर्भाव क्षेत्र' : language === 'hi' ? 'रोग प्रभावित क्षेत्र' : 'Disease Hotspots'}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={activeLayers.disease}
+                  onChange={() => toggleLayer('disease')}
+                  className="rounded accent-amber-500 w-4 h-4 cursor-pointer"
+                />
+              </label>
+
+              {/* Terrain Elevation Contours */}
+              <label className="flex items-center justify-between cursor-pointer group py-0.5">
+                <span className="flex items-center gap-2 text-[var(--text-primary)]">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-400" />
+                  {language === 'mr' ? 'उंची कंटूर रेषा' : language === 'hi' ? 'ऊंचाई समोच्च रेखाएं' : 'Elevation Contours'}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={activeLayers.terrain}
+                  onChange={() => toggleLayer('terrain')}
+                  className="rounded accent-amber-500 w-4 h-4 cursor-pointer"
+                />
+              </label>
+
+              {/* Flight Path */}
+              <label className="flex items-center justify-between cursor-pointer group py-0.5">
+                <span className="flex items-center gap-2 text-[var(--text-primary)]">
+                  <span className="w-2.5 h-2.5 rounded-full bg-sky-400" />
+                  {language === 'mr' ? 'ड्रोन उड्डाण मार्ग' : language === 'hi' ? 'ड्रोन उड़ान पथ' : 'Drone Flight Grid'}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={activeLayers.flightPath}
+                  onChange={() => toggleLayer('flightPath')}
+                  className="rounded accent-amber-500 w-4 h-4 cursor-pointer"
+                />
+              </label>
+
+              {/* Drone Camera Footprint (Gimbal FOV) */}
+              <label className="flex items-center justify-between cursor-pointer group py-0.5">
+                <span className="flex items-center gap-2 text-[var(--text-primary)]">
+                  <span className="w-2.5 h-2.5 rounded-full bg-violet-400" />
+                  {language === 'mr' ? 'कॅमेरा फूटप्रिंट (FOV)' : language === 'hi' ? 'कैमरा फुटप्रिंट (FOV)' : 'Camera FOV Footprint'}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={activeLayers.cameraFov}
+                  onChange={() => toggleLayer('cameraFov')}
+                  className="rounded accent-amber-500 w-4 h-4 cursor-pointer"
+                />
+              </label>
+
+              {/* Live Telemetry Ping */}
+              <label className="flex items-center justify-between cursor-pointer group py-0.5">
+                <span className="flex items-center gap-2 text-[var(--text-primary)]">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                  {language === 'mr' ? 'थेट ड्रोन ट्रॅकिंग' : 'Live RTK Tracking'}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={activeLayers.telemetry}
+                  onChange={() => toggleLayer('telemetry')}
+                  className="rounded accent-amber-500 w-4 h-4 cursor-pointer"
+                />
+              </label>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-              <span className="text-xs text-slate-300 group-hover:text-white transition-colors">{t(labelKey)}</span>
-            </div>
-            {key === 'telemetry' && activeLayers[key] && (
-              <Zap className="w-3 h-3 text-violet-400 animate-pulse ml-auto" />
-            )}
-          </label>
-        ))}
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -6,9 +6,14 @@ import { WeatherWidget } from '@/components/dashboard/WeatherWidget';
 import { SoilSensorWidget } from '@/components/dashboard/SoilSensorWidget';
 import { MissionSummaryCard } from '@/components/dashboard/MissionSummaryCard';
 import { QuickActionCards } from '@/components/dashboard/QuickActionCards';
+import { MandiTickerWidget } from '@/components/dashboard/MandiTickerWidget';
+import { SprayWindowWidget } from '@/components/dashboard/SprayWindowWidget';
+import { KisanRakshakWidget } from '@/components/dashboard/KisanRakshakWidget';
+import { FieldSowingOverview } from '@/components/farmer/FieldSowingOverview';
 import { JudgeEvaluationDeck } from '@/components/judge/JudgeEvaluationDeck';
 import { QuickSprayModal } from '@/components/farmer/QuickSprayModal';
-import { Sparkles, Navigation2, Volume2, VolumeX, AlertTriangle, ShieldCheck, Plane, Sprout } from 'lucide-react';
+import { DashboardTutorialModal } from '@/components/dashboard/DashboardTutorialModal';
+import { Sparkles, Navigation2, Volume2, VolumeX, AlertTriangle, ShieldCheck, Plane, Sprout, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAppStore } from '@/store/useAppStore';
@@ -18,6 +23,7 @@ export default function DashboardPage() {
   const { t } = useTranslation();
   const { language, isSpeaking, setIsSpeaking } = useAppStore();
   const [isFarmerSprayModalOpen, setIsFarmerSprayModalOpen] = useState(false);
+  const [isTutorialOpen, setIsTutorialOpen] = useState(false);
   const [score, setScore] = useState(0);
   const TARGET = 78;
 
@@ -115,6 +121,17 @@ export default function DashboardPage() {
                 {language === 'mr' ? '🚀 त्वरित ड्रोन फवारणी' : language === 'hi' ? '🚀 तुरंत ड्रोन छिड़काव' : '🚀 1-Tap Drone Spray'}
               </span>
             </button>
+
+            {/* Interactive Dashboard Tutorial Walkthrough Button */}
+            <button
+              onClick={() => setIsTutorialOpen(true)}
+              className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all active:scale-95"
+            >
+              <HelpCircle className="w-5 h-5 animate-pulse" />
+              <span>
+                {language === 'mr' ? '📖 डॅशबोर्ड मार्गदर्शिका' : language === 'hi' ? '📖 डैशबोर्ड गाइड' : '📖 Dashboard Guide'}
+              </span>
+            </button>
           </div>
         </div>
 
@@ -195,6 +212,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* ── INTERACTIVE FIELD SOWING OVERVIEW & 6-AI MODEL AUDIT ── */}
+      <FieldSowingOverview />
+
       {/* ── INFORMATION HUB (Critical Alerts in Red + Categorized Tabs) ── */}
       <InformationHub />
 
@@ -203,6 +223,15 @@ export default function DashboardPage() {
 
       {/* ── Quick Actions Grid ── */}
       <QuickActionCards />
+
+      {/* ── Kisan Rakshak: Wildlife, Poisoning & Bogus Seed Solutions ── */}
+      <KisanRakshakWidget />
+
+      {/* ── Grassroots Farmer Super-Tools: Live Mandi Bhav & 48-Hr Spray Window ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <MandiTickerWidget />
+        <SprayWindowWidget />
+      </div>
 
       {/* ── Data Rows: Weather & Soil Sensors ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -223,6 +252,12 @@ export default function DashboardPage() {
         targetField="Soybean East Field · Sector B-3"
         targetDisease="Severe Charcoal Rot"
         recommendedMedicine="Trichoderma viride bio-fungicide (1.4L spray mix)"
+      />
+
+      {/* ── Interactive Dashboard Onboarding Tutorial Modal ── */}
+      <DashboardTutorialModal
+        isOpen={isTutorialOpen}
+        onClose={() => setIsTutorialOpen(false)}
       />
     </div>
   );

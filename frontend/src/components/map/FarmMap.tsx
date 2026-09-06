@@ -2,44 +2,171 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import Map, { Source, Layer, MapRef, NavigationControl, ScaleControl, Marker } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { useMapStore } from '@/store/useMapStore';
+import { useMapStore, BasemapType } from '@/store/useMapStore';
+import { useAppStore } from '@/store/useAppStore';
 import { DISEASE_COLORS, WARANGA_CENTER } from '@/lib/constants';
 import { DiseasePopup } from './DiseasePopup';
 import { DroneMarker } from './DroneMarker';
 import { PinBoundarySelector, PinCoord, FlightMode } from './PinBoundarySelector';
-import { MapPin, Target } from 'lucide-react';
+import { GatParcelPopup, GatParcelData } from './GatParcelPopup';
+import { MapMeasureControl, MeasurePoint } from './MapMeasureControl';
+import { TimeMachineCompareControl } from './TimeMachineCompareControl';
+import { QuickSprayModal } from '@/components/farmer/QuickSprayModal';
+import { MapPin, Target, Eye } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 
-// ESRI World Imagery — free satellite tiles, no API key
-const SATELLITE_STYLE = {
-  version: 8 as const,
-  glyphs: 'https://fonts.openmaptiles.org/{fontstack}/{range}.pbf',
-  sources: {
-    'esri-satellite': {
-      type: 'raster' as const,
-      tiles: [
-        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-      ],
-      tileSize: 256,
-      attribution: 'Tiles © Esri — Source: Esri, Maxar, GeoEye, Earthstar Geographics',
-      maxzoom: 18,
+// ── Multi-Basemap MapLibre Styles (Free, Zero API Key Required) ──
+const BASEMAP_STYLES: Record<BasemapType, any> = {
+  satellite: {
+    version: 8,
+    sources: {
+      'satellite-tiles': {
+        type: 'raster',
+        tiles: [
+          'https://mt0.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+          'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+          'https://mt2.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+          'https://mt3.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+        ],
+        tileSize: 256,
+        attribution: '© Google Satellite & Agricultural Imagery',
+        maxzoom: 20,
+      },
     },
-    'esri-labels': {
-      type: 'raster' as const,
-      tiles: [
-        'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'
-      ],
-      tileSize: 256,
-      maxzoom: 18,
-    }
+    layers: [
+      { id: 'base-sat', type: 'raster', source: 'satellite-tiles' },
+    ],
   },
-  layers: [
-    { id: 'esri-satellite-layer', type: 'raster' as const, source: 'esri-satellite' },
-    { id: 'esri-labels-layer', type: 'raster' as const, source: 'esri-labels', paint: { 'raster-opacity': 0.7 } },
-  ]
+  osm: {
+    version: 8,
+    sources: {
+      'osm-tiles': {
+        type: 'raster',
+        tiles: [
+          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        ],
+        tileSize: 256,
+        attribution: '© OpenStreetMap contributors',
+        maxzoom: 19,
+      },
+    },
+    layers: [
+      { id: 'base-osm', type: 'raster', source: 'osm-tiles' },
+    ],
+  },
+  topo: {
+    version: 8,
+    sources: {
+      'opentopomap': {
+        type: 'raster',
+        tiles: [
+          'https://tile.opentopomap.org/{z}/{x}/{y}.png',
+          'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
+          'https://b.tile.opentopomap.org/{z}/{x}/{y}.png',
+          'https://c.tile.opentopomap.org/{z}/{x}/{y}.png',
+        ],
+        tileSize: 256,
+        attribution: '© OpenTopoMap contributors',
+        maxzoom: 17,
+      },
+    },
+    layers: [
+      { id: 'base-topo', type: 'raster', source: 'opentopomap' },
+    ],
+  },
+  thermal: {
+    version: 8,
+    sources: {
+      'carto-dark': {
+        type: 'raster',
+        tiles: [
+          'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+          'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+          'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+          'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+        ],
+        tileSize: 256,
+        attribution: '© CartoDB Dark, AgriDrone Thermal IR Simulated',
+        maxzoom: 19,
+      },
+    },
+    layers: [
+      { id: 'base-thermal', type: 'raster', source: 'carto-dark' },
+    ],
+  },
 };
 
-// Default Farmland Pins in Waranga Farmlands
+// ── Official Cadastral 7/12 (Satbara) Gat Survey Land Parcels for Waranga ──
+const GAT_PARCELS: GatParcelData[] = [
+  {
+    gatNumber: '142/A',
+    subDivision: 'North Cotton Plot',
+    khataNumber: 'KH-842',
+    ownerName: 'Ramesh R. Patil',
+    areaAcres: 18.5,
+    areaGunthas: 20,
+    areaHa: 7.48,
+    cropType: 'BT Cotton (RCH-659)',
+    soilType: 'Deep Black Vertisol',
+    irrigationType: 'Borewell + Drip Irrigation',
+    ndviScore: 0.74,
+    healthStatus: 'healthy',
+    centerLng: 79.0325,
+    centerLat: 21.0280,
+  },
+  {
+    gatNumber: '142/B',
+    subDivision: 'South Cotton Plot',
+    khataNumber: 'KH-843',
+    ownerName: 'Ramesh R. Patil',
+    areaAcres: 14.2,
+    areaGunthas: 10,
+    areaHa: 5.74,
+    cropType: 'Hybrid Cotton (Bunny)',
+    soilType: 'Medium Black Cotton',
+    irrigationType: 'Canal Flow + Rainfed',
+    ndviScore: 0.68,
+    healthStatus: 'healthy',
+    centerLng: 79.0325,
+    centerLat: 21.0225,
+  },
+  {
+    gatNumber: '143',
+    subDivision: 'East Soybean Plot',
+    khataNumber: 'KH-911',
+    ownerName: 'Sunanda R. Patil',
+    areaAcres: 22.0,
+    areaGunthas: 0,
+    areaHa: 8.90,
+    cropType: 'Soybean (JS-335)',
+    soilType: 'Clayey Vertisol',
+    irrigationType: 'Farm Pond Sprinkler',
+    ndviScore: 0.42,
+    healthStatus: 'stress',
+    centerLng: 79.0385,
+    centerLat: 21.0275,
+  },
+  {
+    gatNumber: '144',
+    subDivision: 'West Mixed Pulses Plot',
+    khataNumber: 'KH-912',
+    ownerName: 'Suresh R. Patil',
+    areaAcres: 12.8,
+    areaGunthas: 32,
+    areaHa: 5.21,
+    cropType: 'Tur Pigeon Pea (BDN-711)',
+    soilType: 'Alluvial Loam',
+    irrigationType: 'Rainfed Kharif',
+    ndviScore: 0.71,
+    healthStatus: 'healthy',
+    centerLng: 79.0385,
+    centerLat: 21.0220,
+  },
+];
+
 const DEFAULT_PINS: PinCoord[] = [
   { id: 1, label: 'NW Pin', lat: 21.0310, lng: 79.0280 },
   { id: 2, label: 'NE Pin', lat: 21.0310, lng: 79.0420 },
@@ -54,11 +181,9 @@ function isValidLng(lng: any): boolean {
   return typeof lng === 'number' && !isNaN(lng) && lng >= -179.9 && lng <= 179.9;
 }
 
-// Calculate polygon area in Hectares
 function calculatePolygonAreaHa(pins: PinCoord[]): number {
-  const valid = pins.filter(p => isValidLat(p.lat) && isValidLng(p.lng));
+  const valid = pins.filter((p) => isValidLat(p.lat) && isValidLng(p.lng));
   if (valid.length < 3) return 0;
-
   const latFactor = 111320;
   const lngFactor = (40075000 * Math.cos((WARANGA_CENTER.lat * Math.PI) / 180)) / 360;
 
@@ -75,15 +200,14 @@ function calculatePolygonAreaHa(pins: PinCoord[]): number {
   return parseFloat((sqM / 10000).toFixed(2));
 }
 
-// Generate dynamic serpentine scan flight path inside 4-pin polygon
 function generateDynamicFlightPath(pins: PinCoord[], mode: FlightMode): number[][] {
-  const valid = pins.filter(p => isValidLat(p.lat) && isValidLng(p.lng));
+  const valid = pins.filter((p) => isValidLat(p.lat) && isValidLng(p.lng));
   if (valid.length < 4) return [[79.0280, 21.0190], [79.0420, 21.0310]];
 
-  const minLng = Math.min(...valid.map(p => p.lng));
-  const maxLng = Math.max(...valid.map(p => p.lng));
-  const minLat = Math.min(...valid.map(p => p.lat));
-  const maxLat = Math.max(...valid.map(p => p.lat));
+  const minLng = Math.min(...valid.map((p) => p.lng));
+  const maxLng = Math.max(...valid.map((p) => p.lng));
+  const minLat = Math.min(...valid.map((p) => p.lat));
+  const maxLat = Math.max(...valid.map((p) => p.lat));
 
   if (mode === 'patrol') {
     return [
@@ -108,7 +232,6 @@ function generateDynamicFlightPath(pins: PinCoord[], mode: FlightMode): number[]
     return pts;
   }
 
-  // Grid scan mode (default serpentine)
   const steps = 6;
   const lngStep = (maxLng - minLng) / steps;
   const path: number[][] = [];
@@ -123,15 +246,25 @@ function generateDynamicFlightPath(pins: PinCoord[], mode: FlightMode): number[]
       path.push([currLng, minLat]);
     }
   }
-
   return path;
 }
 
 export default function FarmMap() {
   const mapRef = useRef<MapRef>(null);
   const searchParams = useSearchParams();
-  const { activeLayers, setSelectedPredictionId } = useMapStore();
+  const { language } = useAppStore();
+  const { 
+    activeLayers, 
+    basemap, 
+    compareMode, 
+    setCompareMode, 
+    measureMode, 
+    setMeasureMode,
+    setSelectedPredictionId 
+  } = useMapStore();
+
   const [popupInfo, setPopupInfo] = useState<any | null>(null);
+  const [selectedGatParcel, setSelectedGatParcel] = useState<GatParcelData | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
 
   // 4-Pin State & Modes
@@ -140,10 +273,26 @@ export default function FarmMap() {
   const [isPickMode, setIsPickMode] = useState(false);
   const [nextPickIndex, setNextPickIndex] = useState(0);
 
-  // Calculated area in Hectares
-  const calculatedAreaHa = useMemo(() => calculatePolygonAreaHa(pins), [pins]);
+  // Measurement Tool State
+  const [measurePoints, setMeasurePoints] = useState<MeasurePoint[]>([]);
 
-  // Dynamic Flight Path
+  // Time-Machine Compare Progress (0 = Day 0 Pre-Spray, 100 = Day 7 Post-Spray)
+  const [compareProgress, setCompareProgress] = useState(35);
+
+  // 1-Tap Spray Modal State
+  const [sprayModalData, setSprayModalData] = useState<{
+    isOpen: boolean;
+    targetField: string;
+    targetDisease: string;
+    recommendedMedicine: string;
+  }>({
+    isOpen: false,
+    targetField: '',
+    targetDisease: '',
+    recommendedMedicine: '',
+  });
+
+  const calculatedAreaHa = useMemo(() => calculatePolygonAreaHa(pins), [pins]);
   const dynamicFlightPath = useMemo(() => generateDynamicFlightPath(pins, flightMode), [pins, flightMode]);
 
   // Target coordinates from query params
@@ -152,7 +301,6 @@ export default function FarmMap() {
   const targetLat = isValidLat(targetLatRaw) ? targetLatRaw : null;
   const targetLng = isValidLng(targetLngRaw) ? targetLngRaw : null;
 
-  // Fly to target lat/lng on load
   useEffect(() => {
     if (mapLoaded && targetLat && targetLng && mapRef.current) {
       mapRef.current.flyTo({
@@ -163,91 +311,190 @@ export default function FarmMap() {
     }
   }, [mapLoaded, targetLat, targetLng]);
 
-  // Dynamic Custom Boundary & Sub-Zone Heatmaps based on active pins
-  const customGeoJSON = useMemo(() => {
-    const valid = pins.filter(p => isValidLat(p.lat) && isValidLng(p.lng));
+  // Dynamic Custom Boundary, Sub-Zones, NDVI, Elevation Contours & 7/12 Gat Parcels
+  const mapData = useMemo(() => {
+    const valid = pins.filter((p) => isValidLat(p.lat) && isValidLng(p.lng));
     if (valid.length < 3) return null;
 
-    const coords = valid.map(p => [p.lng, p.lat]);
+    const coords = valid.map((p) => [p.lng, p.lat]);
     coords.push([valid[0].lng, valid[0].lat]);
 
-    const minLng = Math.min(...valid.map(p => p.lng));
-    const maxLng = Math.max(...valid.map(p => p.lng));
-    const minLat = Math.min(...valid.map(p => p.lat));
-    const maxLat = Math.max(...valid.map(p => p.lat));
+    const minLng = Math.min(...valid.map((p) => p.lng));
+    const maxLng = Math.max(...valid.map((p) => p.lng));
+    const minLat = Math.min(...valid.map((p) => p.lat));
+    const maxLat = Math.max(...valid.map((p) => p.lat));
     const w = maxLng - minLng;
     const h = maxLat - minLat;
+    const midLng = (minLng + maxLng) / 2;
+    const midLat = (minLat + maxLat) / 2;
 
-    const subZones = [
+    // Time-Machine interpolation: blend red infection to emerald green recovery
+    const recoveryRatio = compareProgress / 100;
+    const hotspotColor = recoveryRatio < 0.5 ? '#DC2626' : '#16A34A';
+    const hotspotOpacity = 0.65 - recoveryRatio * 0.35;
+
+    // 1. Cadastral 7/12 Gat Parcels GeoJSON
+    const cadastralFeatures = [
       {
         type: 'Feature',
-        properties: { name: 'Healthy Cotton Canopy', color: '#166534', opacity: 0.35 },
+        properties: { 
+          id: '142/A', 
+          gatNumber: '142/A', 
+          label: language === 'mr' ? 'गट १४२/अ (१८.५ एकर)' : language === 'hi' ? 'गट १४२/अ (१८.५ एकड़)' : 'Gat 142/A (18.5 Ac)', 
+          crop: 'BT Cotton' 
+        },
         geometry: {
           type: 'Polygon',
-          coordinates: [[[minLng + w*0.1, minLat + h*0.5], [minLng + w*0.9, minLat + h*0.5], [minLng + w*0.9, minLat + h*0.9], [minLng + w*0.1, minLat + h*0.9], [minLng + w*0.1, minLat + h*0.5]]]
+          coordinates: [[[minLng, midLat], [midLng, midLat], [midLng, maxLat], [minLng, maxLat], [minLng, midLat]]]
         }
       },
       {
         type: 'Feature',
-        properties: { name: 'Mild Nitrogen Stress', color: '#84cc16', opacity: 0.35 },
+        properties: { 
+          id: '142/B', 
+          gatNumber: '142/B', 
+          label: language === 'mr' ? 'गट १४२/ब (१४.२ एकर)' : language === 'hi' ? 'गट १४२/ब (१४.२ एकड़)' : 'Gat 142/B (14.2 Ac)', 
+          crop: 'Hybrid Cotton' 
+        },
         geometry: {
           type: 'Polygon',
-          coordinates: [[[minLng + w*0.1, minLat + h*0.1], [minLng + w*0.5, minLat + h*0.1], [minLng + w*0.5, minLat + h*0.5], [minLng + w*0.1, minLat + h*0.5], [minLng + w*0.1, minLat + h*0.1]]]
+          coordinates: [[[minLng, minLat], [midLng, minLat], [midLng, midLat], [minLng, midLat], [minLng, minLat]]]
         }
       },
       {
         type: 'Feature',
-        properties: { name: 'Severe Charcoal Rot Hotspot', color: '#DC2626', opacity: 0.55 },
+        properties: { 
+          id: '143', 
+          gatNumber: '143', 
+          label: language === 'mr' ? 'गट १४३ (२२.० एकर)' : language === 'hi' ? 'गट १४३ (२२.० एकड़)' : 'Gat 143 (22.0 Ac)', 
+          crop: 'Soybean JS-335' 
+        },
         geometry: {
           type: 'Polygon',
-          coordinates: [[[minLng + w*0.6, minLat + h*0.15], [minLng + w*0.85, minLat + h*0.15], [minLng + w*0.85, minLat + h*0.4], [minLng + w*0.6, minLat + h*0.4], [minLng + w*0.6, minLat + h*0.15]]]
+          coordinates: [[[midLng, midLat], [maxLng, midLat], [maxLng, maxLat], [midLng, maxLat], [midLng, midLat]]]
+        }
+      },
+      {
+        type: 'Feature',
+        properties: { 
+          id: '144', 
+          gatNumber: '144', 
+          label: language === 'mr' ? 'गट १४४ (१२.८ एकर)' : language === 'hi' ? 'गट १४४ (१२.८ एकड़)' : 'Gat 144 (12.8 Ac)', 
+          crop: 'Tur Pulses' 
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [[[midLng, minLat], [maxLng, minLat], [maxLng, midLat], [midLng, midLat], [midLng, minLat]]]
+        }
+      }
+    ];
+
+    // 2. Continuous NDVI Heatmap Zones
+    const ndviFeatures = [
+      {
+        type: 'Feature',
+        properties: { ndvi: 0.82, color: '#15803D', label: 'Very Healthy (NDVI 0.82)' },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [[[minLng + w*0.05, minLat + h*0.55], [minLng + w*0.45, minLat + h*0.55], [minLng + w*0.45, minLat + h*0.95], [minLng + w*0.05, minLat + h*0.95], [minLng + w*0.05, minLat + h*0.55]]]
+        }
+      },
+      {
+        type: 'Feature',
+        properties: { ndvi: 0.71, color: '#22C55E', label: 'Healthy Canopy (NDVI 0.71)' },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [[[minLng + w*0.05, minLat + h*0.05], [minLng + w*0.45, minLat + h*0.05], [minLng + w*0.45, minLat + h*0.45], [minLng + w*0.05, minLat + h*0.45], [minLng + w*0.05, minLat + h*0.05]]]
+        }
+      },
+      {
+        type: 'Feature',
+        properties: { ndvi: 0.54, color: '#F59E0B', label: 'Moderate Stress (NDVI 0.54)' },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [[[minLng + w*0.55, minLat + h*0.05], [minLng + w*0.95, minLat + h*0.05], [minLng + w*0.95, minLat + h*0.45], [minLng + w*0.55, minLat + h*0.45], [minLng + w*0.55, minLat + h*0.05]]]
+        }
+      },
+      {
+        type: 'Feature',
+        properties: { ndvi: 0.36, color: '#DC2626', label: 'Severe Rot Stress (NDVI 0.36)' },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [[[minLng + w*0.58, minLat + h*0.58], [minLng + w*0.88, minLat + h*0.58], [minLng + w*0.88, minLat + h*0.88], [minLng + w*0.58, minLat + h*0.88], [minLng + w*0.58, minLat + h*0.58]]]
+        }
+      }
+    ];
+
+    // 3. Elevation Contour Lines (meters above sea level)
+    const contourFeatures = [
+      { type: 'Feature', properties: { elev: '282 m' }, geometry: { type: 'LineString', coordinates: [[minLng, minLat + h*0.2], [minLng + w*0.3, minLat + h*0.25], [minLng + w*0.7, minLat + h*0.22], [maxLng, minLat + h*0.18]] } },
+      { type: 'Feature', properties: { elev: '284 m' }, geometry: { type: 'LineString', coordinates: [[minLng, minLat + h*0.4], [minLng + w*0.35, minLat + h*0.45], [minLng + w*0.75, minLat + h*0.42], [maxLng, minLat + h*0.38]] } },
+      { type: 'Feature', properties: { elev: '286 m' }, geometry: { type: 'LineString', coordinates: [[minLng, minLat + h*0.6], [minLng + w*0.4, minLat + h*0.65], [minLng + w*0.8, minLat + h*0.62], [maxLng, minLat + h*0.58]] } },
+      { type: 'Feature', properties: { elev: '288 m' }, geometry: { type: 'LineString', coordinates: [[minLng, minLat + h*0.8], [minLng + w*0.45, minLat + h*0.85], [minLng + w*0.85, minLat + h*0.82], [maxLng, minLat + h*0.78]] } },
+    ];
+
+    // 4. Time-Machine Disease Hotspot with Dynamic Opacity & Color
+    const diseaseFeatures = [
+      {
+        type: 'Feature',
+        properties: {
+          id: 'crit-rot-1',
+          disease_class: 'charcoal_rot',
+          severity: compareProgress > 60 ? 'mild' : 'severe',
+          confidence: compareProgress > 60 ? 35 : 94,
+          area: '1.4',
+          color: hotspotColor,
+          opacity: hotspotOpacity,
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [[[minLng + w*0.62, minLat + h*0.62], [minLng + w*0.85, minLat + h*0.62], [minLng + w*0.85, minLat + h*0.85], [minLng + w*0.62, minLat + h*0.85], [minLng + w*0.62, minLat + h*0.62]]]
         }
       }
     ];
 
     return {
-      boundary: {
-        type: 'FeatureCollection',
-        features: [
-          {
-            type: 'Feature',
-            properties: { name: 'Active Farmland Boundary' },
-            geometry: { type: 'Polygon', coordinates: [coords] }
-          }
-        ]
-      },
-      subZones: {
-        type: 'FeatureCollection',
-        features: subZones
-      },
-      flightPath: {
-        type: 'FeatureCollection',
-        features: [
-          {
-            type: 'Feature',
-            properties: { mode: flightMode },
-            geometry: { type: 'LineString', coordinates: dynamicFlightPath }
-          }
-        ]
-      }
+      boundary: { type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [coords] } }] },
+      cadastral: { type: 'FeatureCollection', features: cadastralFeatures },
+      ndvi: { type: 'FeatureCollection', features: ndviFeatures },
+      contours: { type: 'FeatureCollection', features: contourFeatures },
+      disease: { type: 'FeatureCollection', features: diseaseFeatures },
+      flightPath: { type: 'FeatureCollection', features: [{ type: 'Feature', properties: { mode: flightMode }, geometry: { type: 'LineString', coordinates: dynamicFlightPath } }] },
     };
-  }, [pins, flightMode, dynamicFlightPath]);
+  }, [pins, flightMode, dynamicFlightPath, compareProgress, language]);
+
+  // Measurement GeoJSON
+  const measureGeoJSON = useMemo(() => {
+    if (measurePoints.length === 0) return null;
+    const coords = measurePoints.map((p) => [p.lng, p.lat]);
+
+    const features: any[] = [
+      {
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'LineString', coordinates: coords }
+      }
+    ];
+
+    if (measurePoints.length >= 3) {
+      features.push({
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'Polygon', coordinates: [[...coords, coords[0]]] }
+      });
+    }
+
+    return { type: 'FeatureCollection', features };
+  }, [measurePoints]);
 
   const handleApplyBoundary = () => {
-    const validPins = pins.filter(p => isValidLat(p.lat) && isValidLng(p.lng));
+    const validPins = pins.filter((p) => isValidLat(p.lat) && isValidLng(p.lng));
     if (validPins.length >= 3 && mapRef.current) {
       const minLng = Math.min(...validPins.map((p) => p.lng));
       const maxLng = Math.max(...validPins.map((p) => p.lng));
       const minLat = Math.min(...validPins.map((p) => p.lat));
       const maxLat = Math.max(...validPins.map((p) => p.lat));
-
-      mapRef.current.fitBounds(
-        [
-          [minLng, minLat],
-          [maxLng, maxLat],
-        ],
-        { padding: 80, duration: 1500 }
-      );
+      mapRef.current.fitBounds([[minLng, minLat], [maxLng, maxLat]], { padding: 80, duration: 1500 });
     }
   };
 
@@ -257,11 +504,7 @@ export default function FarmMap() {
     setIsPickMode(false);
     setNextPickIndex(0);
     if (mapRef.current) {
-      mapRef.current.flyTo({
-        center: [WARANGA_CENTER.lng, WARANGA_CENTER.lat],
-        zoom: 14.5,
-        duration: 1500,
-      });
+      mapRef.current.flyTo({ center: [WARANGA_CENTER.lng, WARANGA_CENTER.lat], zoom: 14.5, duration: 1500 });
     }
   };
 
@@ -276,6 +519,15 @@ export default function FarmMap() {
   };
 
   const handleMapClick = useCallback((e: any) => {
+    // 1. Measure Mode: Add measurement vertex
+    if (measureMode) {
+      const clickLat = parseFloat(e.lngLat.lat.toFixed(5));
+      const clickLng = parseFloat(e.lngLat.lng.toFixed(5));
+      setMeasurePoints((prev) => [...prev, { lat: clickLat, lng: clickLng }]);
+      return;
+    }
+
+    // 2. Pick Boundary Pin Mode
     if (isPickMode) {
       const clickLat = e.lngLat.lat;
       const clickLng = e.lngLat.lng;
@@ -292,81 +544,160 @@ export default function FarmMap() {
       return;
     }
 
+    // 3. Feature Click Detection (7/12 Gat Parcel or Disease Hotspot)
     const features = e.features;
     if (features && features.length > 0) {
       const feature = features[0];
-      if (feature.layer.id === 'disease-fill') {
+      if (feature.layer.id === 'cadastral-parcels-fill' || feature.layer.id === 'cadastral-parcels-line') {
+        const found = GAT_PARCELS.find((p) => p.gatNumber === feature.properties.gatNumber);
+        if (found) {
+          setSelectedGatParcel(found);
+          setPopupInfo(null);
+          return;
+        }
+      }
+
+      if (feature.layer.id === 'disease-hotspots-fill') {
         setPopupInfo({ lngLat: e.lngLat, properties: feature.properties });
         setSelectedPredictionId(feature.properties.id);
+        setSelectedGatParcel(null);
+        return;
       }
-    } else {
-      setPopupInfo(null);
-      setSelectedPredictionId(null);
     }
-  }, [isPickMode, nextPickIndex, pins, setSelectedPredictionId]);
+
+    setPopupInfo(null);
+    setSelectedGatParcel(null);
+    setSelectedPredictionId(null);
+  }, [measureMode, isPickMode, nextPickIndex, pins, setSelectedPredictionId]);
 
   return (
     <div className="relative w-full h-full font-sans">
-      {/* 4-Pin & Flight Mode Selector Control */}
-      <PinBoundarySelector
-        pins={pins}
-        onPinsChange={setPins}
-        onApplyBoundary={handleApplyBoundary}
-        onReset={handleResetPins}
-        isPickMode={isPickMode}
-        onTogglePickMode={() => setIsPickMode(!isPickMode)}
-        flightMode={flightMode}
-        onFlightModeChange={setFlightMode}
-        calculatedAreaHa={calculatedAreaHa}
-      />
+      {/* 4-Pin Boundary Selector Control */}
+      {!measureMode && !compareMode && (
+        <PinBoundarySelector
+          pins={pins}
+          onPinsChange={setPins}
+          onApplyBoundary={handleApplyBoundary}
+          onReset={handleResetPins}
+          isPickMode={isPickMode}
+          onTogglePickMode={() => setIsPickMode(!isPickMode)}
+          flightMode={flightMode}
+          onFlightModeChange={setFlightMode}
+          calculatedAreaHa={calculatedAreaHa}
+        />
+      )}
+
+      {/* Interactive Measure HUD */}
+      {measureMode && (
+        <MapMeasureControl
+          points={measurePoints}
+          onClear={() => setMeasurePoints([])}
+          onClose={() => setMeasureMode(false)}
+        />
+      )}
+
+      {/* Time-Machine Before/After Spray Comparison Slider HUD */}
+      {compareMode && (
+        <TimeMachineCompareControl
+          progress={compareProgress}
+          onProgressChange={setCompareProgress}
+          onClose={() => setCompareMode(false)}
+        />
+      )}
 
       <Map
         ref={mapRef}
         initialViewState={{
-          longitude: (targetLng && isValidLng(targetLng)) ? targetLng : WARANGA_CENTER.lng,
-          latitude: (targetLat && isValidLat(targetLat)) ? targetLat : WARANGA_CENTER.lat,
+          longitude: targetLng && isValidLng(targetLng) ? targetLng : WARANGA_CENTER.lng,
+          latitude: targetLat && isValidLat(targetLat) ? targetLat : WARANGA_CENTER.lat,
           zoom: targetLat ? 16 : 14.5,
-          pitch: 0,
-          bearing: 0,
+          pitch: 25, // 3D AgroGIS angle
+          bearing: -10,
         }}
-        mapStyle={SATELLITE_STYLE as any}
-        interactiveLayerIds={['disease-fill']}
+        mapStyle={BASEMAP_STYLES[basemap]}
+        interactiveLayerIds={['disease-hotspots-fill', 'cadastral-parcels-fill']}
         onClick={handleMapClick}
         onLoad={() => setMapLoaded(true)}
         style={{ width: '100%', height: '100%' }}
-        cursor={isPickMode ? 'crosshair' : popupInfo ? 'pointer' : 'grab'}
+        cursor={measureMode ? 'crosshair' : isPickMode ? 'crosshair' : popupInfo || selectedGatParcel ? 'pointer' : 'grab'}
         attributionControl={true}
       >
-        <NavigationControl position="top-left" />
+        <NavigationControl position="top-left" visualizePitch={true} />
         <ScaleControl position="bottom-left" unit="metric" />
 
-        {/* Dynamic 4-Pin Outer Boundary Polygon */}
-        {customGeoJSON && (
-          <Source id="custom-boundary" type="geojson" data={customGeoJSON.boundary}>
+        {/* ── Outer Boundary Polygon ── */}
+        {mapData && activeLayers.boundary && (
+          <Source id="outer-boundary" type="geojson" data={mapData.boundary}>
             <Layer
-              id="custom-boundary-fill"
+              id="outer-boundary-fill"
+              type="fill"
+              paint={{ 'fill-color': '#FBBF24', 'fill-opacity': 0.08 }}
+            />
+            <Layer
+              id="outer-boundary-line"
+              type="line"
+              paint={{ 'line-color': '#FBBF24', 'line-width': 2.5 }}
+            />
+          </Source>
+        )}
+
+        {/* ── 7/12 Cadastral Gat Survey Parcels Layer ── */}
+        {mapData && activeLayers.cadastral && (
+          <Source id="cadastral-parcels" type="geojson" data={mapData.cadastral}>
+            <Layer
+              id="cadastral-parcels-fill"
               type="fill"
               paint={{
-                'fill-color': '#FBBF24',
-                'fill-opacity': 0.12,
+                'fill-color': '#3B82F6',
+                'fill-opacity': 0.15,
               }}
             />
             <Layer
-              id="custom-boundary-line"
+              id="cadastral-parcels-line"
               type="line"
               paint={{
-                'line-color': '#FBBF24',
-                'line-width': 3,
+                'line-color': '#60A5FA',
+                'line-width': 2,
+                'line-dasharray': [3, 2],
               }}
             />
           </Source>
         )}
 
-        {/* Dynamic Crop Health Sub-Zones */}
-        {customGeoJSON && activeLayers.disease && (
-          <Source id="sub-zones" type="geojson" data={customGeoJSON.subZones}>
+        {/* ── Continuous NDVI Heatmap Layer ── */}
+        {mapData && activeLayers.ndvi && (
+          <Source id="ndvi-heatmap" type="geojson" data={mapData.ndvi}>
             <Layer
-              id="sub-zone-fill"
+              id="ndvi-heatmap-fill"
+              type="fill"
+              paint={{
+                'fill-color': ['get', 'color'],
+                'fill-opacity': 0.45,
+              }}
+            />
+          </Source>
+        )}
+
+        {/* ── Elevation Contours Layer ── */}
+        {mapData && activeLayers.terrain && (
+          <Source id="elevation-contours" type="geojson" data={mapData.contours}>
+            <Layer
+              id="elevation-contours-line"
+              type="line"
+              paint={{
+                'line-color': '#38BDF8',
+                'line-width': 1.8,
+                'line-opacity': 0.8,
+              }}
+            />
+          </Source>
+        )}
+
+        {/* ── Disease Hotspot Layer (With Dynamic Time-Machine Blend) ── */}
+        {mapData && activeLayers.disease && (
+          <Source id="disease-hotspots" type="geojson" data={mapData.disease}>
+            <Layer
+              id="disease-hotspots-fill"
               type="fill"
               paint={{
                 'fill-color': ['get', 'color'],
@@ -374,25 +705,24 @@ export default function FarmMap() {
               }}
             />
             <Layer
-              id="sub-zone-outline"
+              id="disease-hotspots-outline"
               type="line"
               paint={{
-                'line-color': '#ffffff',
-                'line-width': 1.5,
-                'line-dasharray': [2, 2],
+                'line-color': '#FFFFFF',
+                'line-width': 2,
               }}
             />
           </Source>
         )}
 
-        {/* Dynamic Flight Path */}
-        {customGeoJSON && activeLayers.flightPath && (
-          <Source id="dynamic-flight" type="geojson" data={customGeoJSON.flightPath}>
+        {/* ── Dynamic Flight Path ── */}
+        {mapData && activeLayers.flightPath && (
+          <Source id="dynamic-flight" type="geojson" data={mapData.flightPath}>
             <Layer
               id="dynamic-flight-line"
               type="line"
               paint={{
-                'line-color': flightMode === 'inspect' ? '#F59E0B' : flightMode === 'patrol' ? '#10B981' : '#60A5FA',
+                'line-color': flightMode === 'inspect' ? '#F59E0B' : flightMode === 'patrol' ? '#10B981' : '#38BDF8',
                 'line-width': 2.5,
                 'line-dasharray': [4, 2],
               }}
@@ -400,8 +730,24 @@ export default function FarmMap() {
           </Source>
         )}
 
-        {/* 4 Corner Pin Markers (Draggable) */}
-        {pins.map((p, idx) => {
+        {/* ── Active Measurement Drawing Layer ── */}
+        {measureGeoJSON && (
+          <Source id="measure-layer" type="geojson" data={measureGeoJSON}>
+            <Layer
+              id="measure-fill"
+              type="fill"
+              paint={{ 'fill-color': '#FBBF24', 'fill-opacity': 0.25 }}
+            />
+            <Layer
+              id="measure-line"
+              type="line"
+              paint={{ 'line-color': '#F59E0B', 'line-width': 3, 'line-dasharray': [2, 2] }}
+            />
+          </Source>
+        )}
+
+        {/* ── 4 Draggable Pin Markers ── */}
+        {!measureMode && !compareMode && pins.map((p, idx) => {
           if (!isValidLat(p.lat) || !isValidLng(p.lng)) return null;
           return (
             <Marker
@@ -422,7 +768,7 @@ export default function FarmMap() {
           );
         })}
 
-        {/* Target Pin Marker (LiDAR Error Anomaly) */}
+        {/* ── Target Marker (If opened via alert or detection link) ── */}
         {targetLat && targetLng && isValidLat(targetLat) && isValidLng(targetLng) && (
           <Marker longitude={targetLng} latitude={targetLat} anchor="center">
             <div className="relative flex items-center justify-center">
@@ -434,12 +780,29 @@ export default function FarmMap() {
           </Marker>
         )}
 
-        {/* Drone Marker */}
+        {/* ── Live Drone Marker + Telemetry Tracking ── */}
         {activeLayers.telemetry && (
           <DroneMarker customPath={dynamicFlightPath} flightMode={flightMode} />
         )}
 
-        {/* Disease Popup */}
+        {/* ── 7/12 Satbara Gat Land Record Popup ── */}
+        {selectedGatParcel && (
+          <GatParcelPopup
+            parcel={selectedGatParcel}
+            onClose={() => setSelectedGatParcel(null)}
+            onLaunchSpray={(parcel) => {
+              setSprayModalData({
+                isOpen: true,
+                targetField: `Gat No. ${parcel.gatNumber} · ${parcel.subDivision}`,
+                targetDisease: parcel.healthStatus === 'stress' ? 'Charcoal Rot Hotspot' : 'Preventive Bio-Protection',
+                recommendedMedicine: 'Trichoderma viride bio-fungicide (1.4L spray mix)',
+              });
+              setSelectedGatParcel(null);
+            }}
+          />
+        )}
+
+        {/* ── Disease Detection Popup ── */}
         {popupInfo && (
           <DiseasePopup
             info={popupInfo}
@@ -447,6 +810,15 @@ export default function FarmMap() {
           />
         )}
       </Map>
+
+      {/* Quick Spray Modal triggered from Gat Parcel */}
+      <QuickSprayModal
+        isOpen={sprayModalData.isOpen}
+        onClose={() => setSprayModalData((prev) => ({ ...prev, isOpen: false }))}
+        targetField={sprayModalData.targetField}
+        targetDisease={sprayModalData.targetDisease}
+        recommendedMedicine={sprayModalData.recommendedMedicine}
+      />
     </div>
   );
 }

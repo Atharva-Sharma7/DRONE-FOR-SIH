@@ -6,7 +6,12 @@
     "analytics": "विश्लेषण",
     "lidarViewer": "LiDAR व्यूअर",
     "missions": "मिशन",
-    "settings": "सेटिंग्स"
+    "mandi": "मंडी भाव",
+    "cropDoctor": "फसल डॉक्टर",
+    "yojna": "सरकारी योजनाएं",
+    "liveFeed": "लाइव वीडियो फीड",
+    "settings": "सेटिंग्स",
+    "kisanRakshak": "किसान रक्षक"
   },
   "dashboard": {
     "title": "डैशबोर्ड",
