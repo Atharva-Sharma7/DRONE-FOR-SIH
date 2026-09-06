@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { NDVITrendChart } from '@/components/analytics/NDVITrendChart';
 import { HealthZoneBreakdown } from '@/components/analytics/HealthZoneBreakdown';
+import { CropProgressReviewTab } from '@/components/farmer/CropProgressReviewTab';
 import { StatCard } from '@/components/ui/StatCard';
 import { TrendingUp, Leaf, CalendarClock } from 'lucide-react';
 import * as Tabs from '@radix-ui/react-tabs';
@@ -67,6 +68,11 @@ export default function AnalyticsPage() {
         <div className="lg:col-span-1">
           <HealthZoneBreakdown />
         </div>
+      </div>
+
+      {/* ── Comprehensive Multi-Crop Growth & Health Progress Review (All Sown Crops) ── */}
+      <div className="pt-6 border-t border-[var(--border)]">
+        <CropProgressReviewTab />
       </div>
     </div>
   );

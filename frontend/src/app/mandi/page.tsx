@@ -267,7 +267,7 @@ export default function MandiPage() {
               {language === 'mr' ? 'जवळपासच्या बाजार समित्यांमधील भाव' : 'Nearby APMC Yard Rates & Distance'}
             </h3>
             <p className="text-xs font-mono text-[var(--text-muted)] mt-0.5">
-              Sorted by highest modal price for {mspInfo.name}
+              Sorted by highest modal price for {typeof mspInfo.name === 'object' ? (mspInfo.name[language as 'en' | 'hi' | 'mr'] || mspInfo.name.en) : mspInfo.name}
             </p>
           </div>
           <span className="text-xs font-mono font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">

@@ -18,6 +18,7 @@ import {
 
 const BASEMAP_OPTIONS: { id: BasemapType; label: string; icon: string }[] = [
   { id: 'satellite', label: 'Satellite', icon: '🛰️' },
+  { id: 'bhuvan',    label: 'ISRO Bhuvan', icon: '🇮🇳' },
   { id: 'osm',       label: 'Cadastral', icon: '🗺️' },
   { id: 'topo',      label: 'Topography', icon: '🏔️' },
   { id: 'thermal',   label: 'Thermal IR', icon: '🌡️' },
@@ -35,6 +36,7 @@ export function LayerControl() {
     setCompareMode,
     measureMode,
     setMeasureMode,
+    setCustomizationPanelOpen,
   } = useMapStore();
   
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -225,6 +227,31 @@ export function LayerControl() {
                   className="rounded accent-amber-500 w-4 h-4 cursor-pointer"
                 />
               </label>
+
+              {/* Custom Farm Infrastructure Markers (POIs) */}
+              <label className="flex items-center justify-between cursor-pointer group py-0.5">
+                <span className="flex items-center gap-2 text-[var(--text-primary)]">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                  {language === 'mr' ? 'शेत पायाभूत चिन्हे (POIs)' : language === 'hi' ? 'खेत संरचना मार्कर (POIs)' : 'Custom Farm POIs'}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={activeLayers.customPois}
+                  onChange={() => toggleLayer('customPois')}
+                  className="rounded accent-amber-500 w-4 h-4 cursor-pointer"
+                />
+              </label>
+            </div>
+
+            {/* Customization Button */}
+            <div className="pt-3 border-t border-[var(--border)]">
+              <button
+                onClick={() => setCustomizationPanelOpen(true)}
+                className="w-full py-2 px-3 rounded-xl text-xs font-bold font-mono bg-gradient-to-r from-emerald-600 to-teal-600 text-white flex items-center justify-center gap-2 hover:opacity-90 shadow-md shadow-emerald-700/20 transition-all active:scale-95"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>{language === 'mr' ? '⚙️ नकाशा सानुकूलित करा' : language === 'hi' ? '⚙️ नक्शा कस्टमाइज़ करें' : '⚙️ Customize Map Views'}</span>
+              </button>
             </div>
           </div>
         </div>

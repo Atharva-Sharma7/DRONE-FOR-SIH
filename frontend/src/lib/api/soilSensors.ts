@@ -5,6 +5,6 @@ export async function getSoilSensorStations(): Promise<SoilSensorStation[]> {
   return apiGet('/soil-sensors');
 }
 
-export async function ingestLoRaWANPayload(stationCode: string, hexPayload: str): Promise<SoilMetricReading> {
+export async function ingestLoRaWANPayload(stationCode: string, hexPayload: string): Promise<SoilMetricReading> {
   return apiPost('/soil-sensors/lorawan-ingest', { station_code: stationCode, hex_payload: hexPayload });
 }

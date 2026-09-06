@@ -25,6 +25,8 @@ import { useAppStore } from '@/store/useAppStore';
 import { speakText, stopSpeaking } from '@/lib/speech';
 import { CropProfile, DEFAULT_CROPS, CropAIAnalysisModal } from './CropAIAnalysisModal';
 import { QuickSprayModal } from './QuickSprayModal';
+import { CropProgressReviewTab } from './CropProgressReviewTab';
+import { BarChart3 } from 'lucide-react';
 
 export interface SownParcel {
   id: string;
@@ -119,6 +121,7 @@ export function FieldSowingOverview() {
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
   const [isSprayModalOpen, setIsSprayModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'sowing' | 'progress'>('sowing');
 
   // Edit parcel state
   const [editingParcel, setEditingParcel] = useState<SownParcel | null>(null);
@@ -186,6 +189,36 @@ export function FieldSowingOverview() {
 
   return (
     <div className="space-y-4 font-sans">
+      {/* ── Top Navigation Tabs: Sown Allocations vs. Crop Progress Review ── */}
+      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-[var(--surface-2)] border border-[var(--border)] max-w-xl">
+        <button
+          onClick={() => setActiveTab('sowing')}
+          className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold font-mono flex items-center justify-center gap-2 transition-all ${
+            activeTab === 'sowing'
+              ? 'bg-[var(--accent)] text-black shadow-md font-extrabold'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+          }`}
+        >
+          <Sprout className="w-4 h-4" />
+          <span>{isMarathi ? '🌾 पेरणी वाटप (Sowing Allocations)' : isHindi ? '🌾 बुवाई विवरण' : '🌾 Sown Crops Allocation'}</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('progress')}
+          className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold font-mono flex items-center justify-center gap-2 transition-all ${
+            activeTab === 'progress'
+              ? 'bg-emerald-600 text-white shadow-md font-extrabold'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+          }`}
+        >
+          <BarChart3 className="w-4 h-4" />
+          <span>{isMarathi ? '📈 पीक वाढ व प्रगती आलेख (Progress Tab)' : isHindi ? '📈 फसल प्रगति व ग्राफ' : '📈 Crop Progress Review'}</span>
+        </button>
+      </div>
+
+      {activeTab === 'progress' ? (
+        <CropProgressReviewTab />
+      ) : (
+        <>
       {/* Overview Header Strip */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 rounded-3xl bg-[var(--surface)] border border-[var(--border)] shadow-sm">
         <div className="flex items-center gap-3.5">
@@ -465,6 +498,8 @@ export function FieldSowingOverview() {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
 
       {/* ── 6-AI MODEL ENSEMBLE MODAL ── */}

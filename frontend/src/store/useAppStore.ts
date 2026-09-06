@@ -33,12 +33,15 @@ interface AppState {
   isOffline: boolean;
   unreadAlertCount: number;
   isSpeaking: boolean;
+  sidebarExpanded: boolean;
   setUser: (user: User | null) => void;
   setTheme: (theme: AppTheme) => void;
   setLanguage: (lang: AppLanguage) => void;
   setFontFamily: (font: AppFontFamily) => void;
   setFontSize: (size: AppFontSize) => void;
   setIsSpeaking: (speaking: boolean) => void;
+  setSidebarExpanded: (expanded: boolean) => void;
+  toggleSidebarExpanded: () => void;
   setOffline: (isOffline: boolean) => void;
   setUnreadAlertCount: (count: number) => void;
 }
@@ -55,12 +58,15 @@ export const useAppStore = create<AppState>()(
       isOffline: false,
       unreadAlertCount: 3,
       isSpeaking: false,
+      sidebarExpanded: false,
       setUser: (user) => set({ user, isAuthenticated: !!user }),
       setTheme: (theme) => set({ theme }),
       setLanguage: (language) => set({ language }),
       setFontFamily: (fontFamily) => set({ fontFamily }),
       setFontSize: (fontSize) => set({ fontSize }),
       setIsSpeaking: (isSpeaking) => set({ isSpeaking }),
+      setSidebarExpanded: (sidebarExpanded) => set({ sidebarExpanded }),
+      toggleSidebarExpanded: () => set((state) => ({ sidebarExpanded: !state.sidebarExpanded })),
       setOffline: (isOffline) => set({ isOffline }),
       setUnreadAlertCount: (count) => set({ unreadAlertCount: count }),
     }),
@@ -71,6 +77,7 @@ export const useAppStore = create<AppState>()(
         language: state.language,
         fontFamily: state.fontFamily,
         fontSize: state.fontSize,
+        sidebarExpanded: state.sidebarExpanded,
       }),
     }
   )

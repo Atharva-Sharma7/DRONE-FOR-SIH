@@ -12,11 +12,39 @@ import { GatParcelPopup, GatParcelData } from './GatParcelPopup';
 import { MapMeasureControl, MeasurePoint } from './MapMeasureControl';
 import { TimeMachineCompareControl } from './TimeMachineCompareControl';
 import { QuickSprayModal } from '@/components/farmer/QuickSprayModal';
-import { MapPin, Target, Eye } from 'lucide-react';
+import { MapPin, Target, Eye, Sliders, X, Trash2 } from 'lucide-react';
+import { MapCustomizationPanel } from './MapCustomizationPanel';
+import { CustomFarmMarker } from '@/store/useMapStore';
 import { useSearchParams } from 'next/navigation';
 
 // ── Multi-Basemap MapLibre Styles (Free, Zero API Key Required) ──
 const BASEMAP_STYLES: Record<BasemapType, any> = {
+  bhuvan: {
+    version: 8,
+    sources: {
+      'bhuvan-tiles': {
+        type: 'raster',
+        tiles: [
+          'https://bhuvan-vec2.nrsc.gov.in/bhuvan/wms?service=WMS&version=1.1.1&request=GetMap&layers=bhuvan:india3&bbox={bbox-epsg-3857}&width=256&height=256&srs=EPSG:3857&format=image/png',
+        ],
+        tileSize: 256,
+        attribution: '© ISRO NRSC Bhuvan National Geoportal',
+        maxzoom: 19,
+      },
+      'sat-fallback': {
+        type: 'raster',
+        tiles: [
+          'https://mt0.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+          'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+        ],
+        tileSize: 256,
+      },
+    },
+    layers: [
+      { id: 'bhuvan-sat', type: 'raster', source: 'sat-fallback' },
+      { id: 'bhuvan-vec', type: 'raster', source: 'bhuvan-tiles', paint: { 'raster-opacity': 0.88 } },
+    ],
+  },
   satellite: {
     version: 8,
     sources: {
@@ -260,8 +288,18 @@ export default function FarmMap() {
     setCompareMode, 
     measureMode, 
     setMeasureMode,
-    setSelectedPredictionId 
+    setSelectedPredictionId,
+    pitch,
+    highSunlightMode,
+    parcelOutlineColor,
+    parcelFillOpacity,
+    customMarkers,
+    customizationPanelOpen,
+    setCustomizationPanelOpen,
+    removeCustomMarker,
   } = useMapStore();
+
+  const [selectedCustomMarker, setSelectedCustomMarker] = useState<CustomFarmMarker | null>(null);
 
   const [popupInfo, setPopupInfo] = useState<any | null>(null);
   const [selectedGatParcel, setSelectedGatParcel] = useState<GatParcelData | null>(null);
@@ -310,6 +348,16 @@ export default function FarmMap() {
       });
     }
   }, [mapLoaded, targetLat, targetLng]);
+
+  useEffect(() => {
+    if (mapLoaded && mapRef.current) {
+      try {
+        mapRef.current.getMap().setPitch(pitch);
+      } catch (err) {
+        // ignore pitch set errors before full load
+      }
+    }
+  }, [pitch, mapLoaded]);
 
   // Dynamic Custom Boundary, Sub-Zones, NDVI, Elevation Contours & 7/12 Gat Parcels
   const mapData = useMemo(() => {
@@ -571,7 +619,7 @@ export default function FarmMap() {
   }, [measureMode, isPickMode, nextPickIndex, pins, setSelectedPredictionId]);
 
   return (
-    <div className="relative w-full h-full font-sans">
+    <div className="relative w-full h-full font-sans" style={{ filter: highSunlightMode ? "contrast(1.25) saturate(1.2) brightness(1.05)" : "none" }}>
       {/* 4-Pin Boundary Selector Control */}
       {!measureMode && !compareMode && (
         <PinBoundarySelector
@@ -625,18 +673,18 @@ export default function FarmMap() {
         <NavigationControl position="top-left" visualizePitch={true} />
         <ScaleControl position="bottom-left" unit="metric" />
 
-        {/* ── Outer Boundary Polygon ── */}
+        {/* ── Outer Boundary Polygon (Customizable Color & Fill) ── */}
         {mapData && activeLayers.boundary && (
           <Source id="outer-boundary" type="geojson" data={mapData.boundary}>
             <Layer
               id="outer-boundary-fill"
               type="fill"
-              paint={{ 'fill-color': '#FBBF24', 'fill-opacity': 0.08 }}
+              paint={{ 'fill-color': parcelOutlineColor || '#FBBF24', 'fill-opacity': parcelFillOpacity ?? 0.08 }}
             />
             <Layer
               id="outer-boundary-line"
               type="line"
-              paint={{ 'line-color': '#FBBF24', 'line-width': 2.5 }}
+              paint={{ 'line-color': parcelOutlineColor || '#FBBF24', 'line-width': 2.8 }}
             />
           </Source>
         )}
@@ -746,6 +794,42 @@ export default function FarmMap() {
           </Source>
         )}
 
+                {/* ── Custom Farm Infrastructure Markers (POIs) ── */}
+        {activeLayers.customPois && customMarkers.map((marker) => {
+          if (!isValidLat(marker.lat) || !isValidLng(marker.lng)) return null;
+          const iconEmoji = 
+            marker.type === 'borewell' ? '💧' :
+            marker.type === 'pond' ? '🌊' :
+            marker.type === 'solarpump' ? '⚡' :
+            marker.type === 'shed' ? '🏚️' :
+            marker.type === 'trap' ? '🪤' :
+            marker.type === 'polyhouse' ? '🌱' : '📍';
+
+          return (
+            <Marker
+              key={marker.id}
+              longitude={marker.lng}
+              latitude={marker.lat}
+              anchor="bottom"
+            >
+              <div 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedCustomMarker(marker);
+                }}
+                className="flex flex-col items-center group cursor-pointer hover:scale-110 transition-transform"
+              >
+                <div className="bg-emerald-800 text-white font-bold font-mono text-[9px] px-1.5 py-0.5 rounded shadow-lg border border-white/40 flex items-center gap-1 whitespace-nowrap mb-0.5">
+                  <span>{marker.label}</span>
+                </div>
+                <div className="w-7 h-7 rounded-full bg-emerald-600 border-2 border-white shadow-xl flex items-center justify-center text-white text-xs">
+                  {iconEmoji}
+                </div>
+              </div>
+            </Marker>
+          );
+        })}
+
         {/* ── 4 Draggable Pin Markers ── */}
         {!measureMode && !compareMode && pins.map((p, idx) => {
           if (!isValidLat(p.lat) || !isValidLng(p.lng)) return null;
@@ -810,6 +894,60 @@ export default function FarmMap() {
           />
         )}
       </Map>
+
+            {/* Map Customization Floating Control Panel */}
+      <MapCustomizationPanel />
+
+      {/* Map Customization Quick Toggle Button */}
+      {!customizationPanelOpen && (
+        <button
+          onClick={() => setCustomizationPanelOpen(true)}
+          className="absolute bottom-6 left-16 z-10 bg-[var(--surface)]/90 backdrop-blur-md text-[var(--text-primary)] hover:bg-[var(--accent)] hover:text-black border border-[var(--border)] px-3 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 shadow-lg transition-all"
+          title="Customize Map"
+        >
+          <Sliders className="w-3.5 h-3.5" />
+          <span>{language === 'mr' ? '🎨 सानुकूलित करा' : language === 'hi' ? '🎨 कस्टमाइज़ करें' : '🎨 Customize'}</span>
+        </button>
+      )}
+
+      {/* Selected Custom Farm POI Info Popup */}
+      {selectedCustomMarker && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-30 bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-4 shadow-2xl w-80 font-sans">
+          <div className="flex items-center justify-between pb-2 mb-2 border-b border-[var(--border)]">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">
+                {selectedCustomMarker.type === 'borewell' ? '💧' : selectedCustomMarker.type === 'pond' ? '🌊' : selectedCustomMarker.type === 'solarpump' ? '⚡' : '📍'}
+              </span>
+              <div>
+                <h4 className="text-sm font-bold text-[var(--text-primary)]">{selectedCustomMarker.label}</h4>
+                <span className="text-[10px] font-mono text-[var(--accent)] uppercase">{selectedCustomMarker.type}</span>
+              </div>
+            </div>
+            <button 
+              onClick={() => setSelectedCustomMarker(null)} 
+              className="text-[var(--text-muted)] hover:text-white p-1"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          {selectedCustomMarker.notes && (
+            <p className="text-xs text-[var(--text-secondary)] mb-3">{selectedCustomMarker.notes}</p>
+          )}
+          <div className="text-[10px] font-mono text-[var(--text-muted)] mb-3">
+            GPS: {selectedCustomMarker.lat.toFixed(5)}, {selectedCustomMarker.lng.toFixed(5)}
+          </div>
+          <button
+            onClick={() => {
+              removeCustomMarker(selectedCustomMarker.id);
+              setSelectedCustomMarker(null);
+            }}
+            className="w-full py-1.5 px-3 rounded-lg bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>{language === 'mr' ? 'मार्कर हटवा' : language === 'hi' ? 'मार्कर हटाएं' : 'Remove Marker'}</span>
+          </button>
+        </div>
+      )}
 
       {/* Quick Spray Modal triggered from Gat Parcel */}
       <QuickSprayModal

@@ -18,12 +18,12 @@ export default function DiseasesPage() {
     // Mock data for demo
     const mockData: Prediction[] = [
       {
-        id: 'p-1', mission_id: 'm-1', disease_class: 'target_spot', confidence: 0.92, severity: 'high', affected_area_ha: 1.2,
+        id: 'p-1', mission_id: 'm-1', disease_class: 'target_spot', confidence: 0.92, severity: 'severe', affected_area_ha: 1.2,
         recommended_action: 'Apply recommended fungicide within 48 hours.', created_at: new Date().toISOString(),
         geom: { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [] } } as any
       },
       {
-        id: 'p-2', mission_id: 'm-1', disease_class: 'charcoal_rot', confidence: 0.85, severity: 'medium', affected_area_ha: 0.8,
+        id: 'p-2', mission_id: 'm-1', disease_class: 'charcoal_rot', confidence: 0.85, severity: 'moderate', affected_area_ha: 0.8,
         recommended_action: 'Monitor soil moisture and avoid water stress.', created_at: new Date().toISOString(),
         geom: { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [] } } as any
       }

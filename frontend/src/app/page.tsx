@@ -13,7 +13,7 @@ import { FieldSowingOverview } from '@/components/farmer/FieldSowingOverview';
 import { JudgeEvaluationDeck } from '@/components/judge/JudgeEvaluationDeck';
 import { QuickSprayModal } from '@/components/farmer/QuickSprayModal';
 import { DashboardTutorialModal } from '@/components/dashboard/DashboardTutorialModal';
-import { Sparkles, Navigation2, Volume2, VolumeX, AlertTriangle, ShieldCheck, Plane, Sprout, HelpCircle } from 'lucide-react';
+import { Sparkles, Navigation2, Volume2, VolumeX, AlertTriangle, ShieldCheck, Plane, Sprout, HelpCircle, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAppStore } from '@/store/useAppStore';
@@ -110,6 +110,17 @@ export default function DashboardPage() {
                   : (language === 'mr' ? '🔊 शेतीची माहिती ऐका' : language === 'hi' ? '🔊 खेत की बात सुनें' : '🔊 Listen Farm Report')}
               </span>
             </button>
+
+            {/* Crop Progress Charts Quick Link Button */}
+            <Link
+              href="/progress"
+              className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white font-bold text-xs shadow-md shadow-emerald-700/30 transition-all active:scale-95"
+            >
+              <TrendingUp className="w-5 h-5 animate-pulse" />
+              <span>
+                {language === 'mr' ? '📈 पीक वाढ व प्रगती आलेख' : language === 'hi' ? '📈 फसल प्रगति चार्ट' : '📈 Crop Progress Charts'}
+              </span>
+            </Link>
 
             {/* Instant Drone Sprayer Button */}
             <button

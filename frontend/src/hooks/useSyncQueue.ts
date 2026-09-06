@@ -30,11 +30,11 @@ export function useSyncQueue() {
       while (offset < totalSize) {
         await new Promise(resolve => setTimeout(resolve, 500));
         offset += 20;
-        await db.syncQueue.update(item.id, { chunkOffset: offset, status: 'syncing' });
+        await db.syncQueue.update(item.id, { chunkOffset: offset, status: 'uploading' });
         fetchQueue();
       }
       
-      await db.syncQueue.update(item.id, { status: 'completed' });
+      await db.syncQueue.update(item.id, { status: 'complete' });
       fetchQueue();
     }
     setProcessingItem(null);
@@ -42,7 +42,7 @@ export function useSyncQueue() {
 
   return {
     queueItems,
-    totalPending: queueItems.filter(item => item.status === 'pending' || item.status === 'syncing').length,
+    totalPending: queueItems.filter(item => item.status === 'pending' || item.status === 'uploading').length,
     processingItem,
     triggerSync
   };

@@ -130,22 +130,4 @@ export interface SyncQueueItem {
   createdAt: number;        // epoch ms
 }
 
-// Ensure GeoJSON types are available globally
-declare global {
-  namespace GeoJSON {
-    interface Feature {
-      type: 'Feature';
-      geometry: Geometry;
-      properties: Record<string, unknown> | null;
-    }
-    type Geometry =
-      | { type: 'Point'; coordinates: number[] }
-      | { type: 'MultiPoint'; coordinates: number[][] }
-      | { type: 'LineString'; coordinates: number[][] }
-      | { type: 'MultiLineString'; coordinates: number[][][] }
-      | { type: 'Polygon'; coordinates: number[][][] }
-      | { type: 'MultiPolygon'; coordinates: number[][][][] }
-      | { type: 'GeometryCollection'; geometries: Geometry[] };
-  }
-}
 

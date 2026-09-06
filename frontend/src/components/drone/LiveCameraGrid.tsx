@@ -20,7 +20,8 @@ import {
   MapPin,
   CheckCircle2,
   Microscope,
-  Plane
+  Plane,
+  Video
 } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAppStore } from '@/store/useAppStore';
@@ -45,6 +46,7 @@ interface SyncedSensorProfile {
   hyperspectralPeak: number;
   scientificName: string;
   reflectancePoints: string; // SVG path data
+  videoUrl: string;
 }
 
 const SYNCED_PROFILES: Record<string, SyncedSensorProfile> = {
@@ -69,6 +71,7 @@ const SYNCED_PROFILES: Record<string, SyncedSensorProfile> = {
     hyperspectralPeak: 720,
     scientificName: 'Gossypium hirsutum (Cotton)',
     reflectancePoints: 'M 10 110 Q 50 100 100 95 Q 150 90 200 105 Q 220 110 240 50 Q 280 20 340 18 Q 370 20 390 25',
+    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-green-crops-in-a-field-41130-large.mp4',
   },
   soybean: {
     cropKey: 'soybean',
@@ -91,6 +94,7 @@ const SYNCED_PROFILES: Record<string, SyncedSensorProfile> = {
     hyperspectralPeak: 710,
     scientificName: 'Glycine max (Soybean)',
     reflectancePoints: 'M 10 112 Q 50 105 100 100 Q 150 98 200 112 Q 220 115 240 65 Q 280 32 340 28 Q 370 30 390 35',
+    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-drone-view-of-a-rural-field-with-crops-41133-large.mp4',
   },
   tur: {
     cropKey: 'tur',
@@ -112,6 +116,7 @@ const SYNCED_PROFILES: Record<string, SyncedSensorProfile> = {
     hyperspectralPeak: 735,
     scientificName: 'Cajanus cajan (Pigeon Pea)',
     reflectancePoints: 'M 10 114 Q 50 102 100 92 Q 150 88 200 102 Q 220 108 240 45 Q 280 18 340 15 Q 370 17 390 22',
+    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-flying-over-a-field-with-yellow-flowers-41131-large.mp4',
   },
   chana: {
     cropKey: 'chana',
@@ -133,6 +138,7 @@ const SYNCED_PROFILES: Record<string, SyncedSensorProfile> = {
     hyperspectralPeak: 715,
     scientificName: 'Cicer arietinum (Chickpea)',
     reflectancePoints: 'M 10 115 Q 50 108 100 102 Q 150 96 200 108 Q 220 112 240 58 Q 280 26 340 22 Q 370 24 390 28',
+    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-green-crops-in-a-field-41130-large.mp4',
   },
   onion: {
     cropKey: 'onion',
@@ -155,6 +161,7 @@ const SYNCED_PROFILES: Record<string, SyncedSensorProfile> = {
     hyperspectralPeak: 725,
     scientificName: 'Allium cepa (Onion)',
     reflectancePoints: 'M 10 113 Q 50 104 100 98 Q 150 94 200 106 Q 220 110 240 52 Q 280 22 340 19 Q 370 21 390 26',
+    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-drone-view-of-a-rural-field-with-crops-41133-large.mp4',
   },
 };
 
@@ -166,6 +173,8 @@ export function LiveCameraGrid() {
 
   const [activeCropKey, setActiveCropKey] = useState<string>('cotton');
   const [activeFocusCam, setActiveFocusCam] = useState<number | null>(null);
+  const [isLiveVideoMode, setIsLiveVideoMode] = useState<boolean>(true);
+  const [videoError, setVideoError] = useState<boolean>(false);
   const [zoomLevel, setZoomLevel] = useState<1 | 2 | 4>(1);
   const [snapshotTaken, setSnapshotTaken] = useState(false);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
@@ -278,6 +287,19 @@ export function LiveCameraGrid() {
             <span className="font-bold text-blue-600">84%</span>
           </div>
 
+          {/* Video / Still Toggle */}
+          <button
+            onClick={() => setIsLiveVideoMode(!isLiveVideoMode)}
+            className={`px-3 py-1 rounded-lg font-bold flex items-center gap-1.5 transition-all text-xs cursor-pointer border ${
+              isLiveVideoMode
+                ? 'bg-rose-600 text-white border-rose-500 shadow-md shadow-rose-600/30'
+                : 'bg-[var(--surface-2)] hover:bg-[var(--border)] text-[var(--text-primary)] border-[var(--border)]'
+            }`}
+          >
+            <span className={`w-2 h-2 rounded-full ${isLiveVideoMode ? 'bg-white animate-ping' : 'bg-slate-400'}`} />
+            <span>{isLiveVideoMode ? (isMarathi ? '🎥 थेट व्हिडिओ' : isHindi ? '🎥 लाइव वीडियो' : '🎥 Drone Video') : (isMarathi ? '📸 स्थिर फोटो' : isHindi ? '📸 स्थिर फोटो' : '📸 4K Still')}</span>
+          </button>
+
           {/* Zoom Toggle */}
           <button
             onClick={() => setZoomLevel((prev) => (prev === 1 ? 2 : prev === 2 ? 4 : 1))}
@@ -339,12 +361,27 @@ export function LiveCameraGrid() {
             </div>
 
             <div className={`relative overflow-hidden flex items-center justify-center bg-black transition-all ${activeFocusCam === 1 ? 'h-[480px]' : 'h-72'}`}>
-              <img 
-                src={currentCrop.opticalImage} 
-                alt={`${currentCrop.name} Optical Feed`}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500"
-                style={{ transform: `scale(${zoomLevel})` }}
-              />
+              {isLiveVideoMode && !videoError ? (
+                <video
+                  key={`cam1-${currentCrop.cropKey}`}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500"
+                  style={{ transform: `scale(${zoomLevel})` }}
+                  onError={() => setVideoError(true)}
+                >
+                  <source src={currentCrop.videoUrl} type="video/mp4" />
+                </video>
+              ) : (
+                <img 
+                  src={currentCrop.opticalImage} 
+                  alt={`${currentCrop.name} Optical Feed`}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500"
+                  style={{ transform: `scale(${zoomLevel})` }}
+                />
+              )}
               <div className="absolute inset-0 bg-emerald-950/20" />
 
               {/* Crosshairs */}
@@ -409,12 +446,26 @@ export function LiveCameraGrid() {
             </div>
 
             <div className={`relative overflow-hidden flex items-center justify-center bg-black transition-all ${activeFocusCam === 2 ? 'h-[480px]' : 'h-72'}`}>
-              <img 
-                src={currentCrop.opticalImage} 
-                alt={`${currentCrop.name} Multispectral Feed`}
-                className="absolute inset-0 w-full h-full object-cover mix-blend-luminosity filter contrast-150"
-                style={{ transform: `scale(${zoomLevel})` }}
-              />
+              {isLiveVideoMode && !videoError ? (
+                <video
+                  key={`cam2-${currentCrop.cropKey}`}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-cover mix-blend-luminosity filter contrast-150"
+                  style={{ transform: `scale(${zoomLevel})` }}
+                >
+                  <source src={currentCrop.videoUrl} type="video/mp4" />
+                </video>
+              ) : (
+                <img 
+                  src={currentCrop.opticalImage} 
+                  alt={`${currentCrop.name} Multispectral Feed`}
+                  className="absolute inset-0 w-full h-full object-cover mix-blend-luminosity filter contrast-150"
+                  style={{ transform: `scale(${zoomLevel})` }}
+                />
+              )}
               <div className="absolute inset-0 bg-gradient-to-tr from-rose-600/70 via-amber-400/50 to-emerald-500/75 mix-blend-color" />
 
               {/* Crop-Specific NDVI Gauge */}
@@ -463,12 +514,26 @@ export function LiveCameraGrid() {
             </div>
 
             <div className={`relative overflow-hidden flex items-center justify-center bg-black transition-all ${activeFocusCam === 3 ? 'h-[480px]' : 'h-72'}`}>
-              <img 
-                src={currentCrop.opticalImage} 
-                alt={`${currentCrop.name} Thermal Feed`}
-                className="absolute inset-0 w-full h-full object-cover filter invert contrast-150"
-                style={{ transform: `scale(${zoomLevel})` }}
-              />
+              {isLiveVideoMode && !videoError ? (
+                <video
+                  key={`cam3-${currentCrop.cropKey}`}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-cover filter invert contrast-150"
+                  style={{ transform: `scale(${zoomLevel})` }}
+                >
+                  <source src={currentCrop.videoUrl} type="video/mp4" />
+                </video>
+              ) : (
+                <img 
+                  src={currentCrop.opticalImage} 
+                  alt={`${currentCrop.name} Thermal Feed`}
+                  className="absolute inset-0 w-full h-full object-cover filter invert contrast-150"
+                  style={{ transform: `scale(${zoomLevel})` }}
+                />
+              )}
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/80 via-purple-900/75 to-amber-500/80 mix-blend-color" />
 
               {/* Thermal Hotspot / Coolspot Overlays */}

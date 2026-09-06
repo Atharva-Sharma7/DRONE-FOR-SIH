@@ -6,7 +6,7 @@ export function SyncProgressBar({ missionId }: { missionId: string }) {
   const { queueItems } = useSyncQueue();
   
   // Find queue item related to this mission (mock implementation)
-  const item = queueItems.find(i => i.payload?.missionId === missionId);
+  const item = queueItems.find(i => typeof i.payload === 'object' && (i.payload as any)?.missionId === missionId);
   const progress = item ? (item.chunkOffset / 100) * 100 : 45; // Default mock progress
 
   return (
